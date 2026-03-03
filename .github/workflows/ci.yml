@@ -44,6 +44,7 @@ jobs:
             /k:"1oan_AURA-backend" \
             /o:"1oan" \
             /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.exclusions="vue/**,ai-service/**" \
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: Build
