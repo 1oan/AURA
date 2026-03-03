@@ -1,0 +1,8 @@
+fastapi==0.135.1
+uvicorn[standard]==0.41.0
+pydantic-settings==2.13.1
+
+asyncpg==0.31.0
+pgvector==0.4.2
+
+sentence-transformers==5.2.3
