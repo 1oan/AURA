@@ -9,11 +9,10 @@ RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/wh
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+ARG MODEL_NAME=all-MiniLM-L6-v2
 ENV HF_HOME=/app/.cache/huggingface
-COPY app/config.py ./app/config.py
-COPY app/__init__.py ./app/__init__.py
 COPY preload_model.py .
-RUN python preload_model.py
+RUN python preload_model.py $MODEL_NAME
 
 FROM python:3.12-slim
 

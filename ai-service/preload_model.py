@@ -1,5 +1,7 @@
-from app.config import settings
+import sys
+
 from sentence_transformers import SentenceTransformer
 
-SentenceTransformer(settings.model_name)
-print("Model downloaded and cached.")
+model_name = sys.argv[1] if len(sys.argv) > 1 else "all-MiniLM-L6-v2"
+SentenceTransformer(model_name)
+print(f"Model '{model_name}' downloaded and cached.")
