@@ -8,7 +8,7 @@ const theme = ref<Theme>((localStorage.getItem(STORAGE_KEY) as Theme) ?? 'system
 
 function applyTheme(value: Theme) {
   const isDark =
-    value === 'dark' || (value === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    value === 'dark' || (value === 'system' && globalThis.matchMedia('(prefers-color-scheme: dark)').matches)
 
   document.documentElement.classList.toggle('dark', isDark)
 }
@@ -29,7 +29,7 @@ export function useTheme() {
 
   onMounted(() => {
     applyTheme(theme.value)
-    mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    mediaQuery = globalThis.matchMedia('(prefers-color-scheme: dark)')
     mediaQuery.addEventListener('change', onSystemChange)
   })
 
