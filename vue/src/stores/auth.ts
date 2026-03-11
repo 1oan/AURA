@@ -1,0 +1,69 @@
+import { ref, computed } from 'vue'
+import { defineStore } from 'pinia'
+import { router } from '@/router'
+import * as authApi from '@/api/auth'
+
+export const useAuthStore = defineStore('auth', () => {
+  const user = ref<authApi.UserDto | null>(null)
+  const token = ref<string | null>(localStorage.getItem('auth_token'))
+  const isLoading = ref(false)
+
+  const isAuthenticated = computed(() => !!token.value)
+
+  function setAuth(result: authApi.AuthResult) {
+    token.value = result.token
+    localStorage.setItem('auth_token', result.token)
+
+    user.value = {
+      id: result.userId,
+      email: result.email,
+      firstName: result.firstName,
+      lastName: result.lastName,
+      role: result.role,
+      createdAt: new Date().toISOString(),
+    }
+  }
+
+  async function register(data: authApi.RegisterRequest) {
+    const result = await authApi.register(data)
+    setAuth(result)
+    router.push({ name: 'dashboard' })
+  }
+
+  async function login(data: authApi.LoginRequest) {
+    const result = await authApi.login(data)
+    setAuth(result)
+    router.push({ name: 'dashboard' })
+  }
+
+  function logout() {
+    token.value = null
+    user.value = null
+    localStorage.removeItem('auth_token')
+    router.push({ name: 'login' })
+  }
+
+  async function fetchCurrentUser() {
+    if (!token.value) return
+
+    try {
+      isLoading.value = true
+      user.value = await authApi.getCurrentUser()
+    } catch {
+      logout()
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  return {
+    user,
+    token,
+    isLoading,
+    isAuthenticated,
+    register,
+    login,
+    logout,
+    fetchCurrentUser,
+  }
+})

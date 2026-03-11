@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, type Component } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import {
   LayoutDashboard,
   Building2,
@@ -46,6 +47,7 @@ interface NavItem {
 }
 
 const route = useRoute()
+const authStore = useAuthStore()
 
 const mainNav: NavItem[] = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
@@ -219,7 +221,7 @@ function isActive(url: string) {
                 <ThemeToggle />
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem class="gap-2 text-destructive">
+              <DropdownMenuItem class="gap-2 text-destructive" @click="authStore.logout()">
                 <LogOut class="size-4" />
                 Sign out
               </DropdownMenuItem>
