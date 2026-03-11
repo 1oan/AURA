@@ -1,0 +1,8 @@
+using Aura.Domain.Entities;
+
+namespace Aura.Application.Common.Interfaces;
+
+public interface IJwtTokenGenerator
+{
+    string GenerateToken(User user);
+}

@@ -1,4 +1,7 @@
+using Aura.Application.Common.Interfaces;
+using Aura.Infrastructure.Auth;
 using Aura.Infrastructure.Persistence;
+using Aura.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +24,12 @@ public static class DependencyInjection
                 npgsql.UseVector();
                 npgsql.EnableRetryOnFailure(maxRetryCount: 3);
             }));
+
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
+
+        services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
+        services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
         return services;
     }

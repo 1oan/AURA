@@ -1,0 +1,14 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Database=aura;Username=aura;Password=YOUR_PASSWORD"
+  },
+  "Jwt": {
+    "Secret": "YOUR_SECRET_KEY_AT_LEAST_32_BYTES_LONG"
+  }
+}
