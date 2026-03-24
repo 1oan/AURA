@@ -13,6 +13,8 @@ public class User
     public UserRole Role { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? LastLoginAt { get; private set; }
+    public Guid? FacultyId { get; private set; }
+    public Faculty? Faculty { get; private set; }
 
     private User() { }
 
@@ -79,5 +81,20 @@ public class User
     public void RecordLogin()
     {
         LastLoginAt = DateTime.UtcNow;
+    }
+
+    public void AssignToFaculty(Guid facultyId)
+    {
+        if (Role != UserRole.FacultyAdmin)
+            throw new DomainException("Only FacultyAdmin users can be assigned to a faculty.");
+        if (facultyId == Guid.Empty)
+            throw new DomainException("Faculty ID is required.");
+
+        FacultyId = facultyId;
+    }
+
+    public void RemoveFromFaculty()
+    {
+        FacultyId = null;
     }
 }
