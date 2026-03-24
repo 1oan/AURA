@@ -20,7 +20,7 @@ public class GetCampusByIdQueryHandler : IRequestHandler<GetCampusByIdQuery, Cam
     public async Task<CampusDetailDto> Handle(GetCampusByIdQuery request, CancellationToken cancellationToken)
     {
         var campus = await _campusRepository.FindByIdWithDormitoriesAsync(request.Id, cancellationToken)
-            ?? throw new DomainException($"Campus with id '{request.Id}' was not found.");
+            ?? throw new NotFoundException($"Campus with id '{request.Id}' was not found.");
 
         var dormitories = campus.Dormitories
             .Select(d => new DormitoryDto(d.Id, d.Name, campus.Id))

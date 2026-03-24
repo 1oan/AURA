@@ -21,7 +21,7 @@ public class UpdateProfileCommandHandler : IRequestHandler<UpdateProfileCommand,
     {
         var userId = _currentUserService.GetCurrentUserId();
         var user = await _userRepository.FindByIdAsync(userId, cancellationToken)
-            ?? throw new DomainException("User not found.");
+            ?? throw new NotFoundException("User not found.");
 
         user.UpdateProfile(request.FirstName, request.LastName);
         await _userRepository.SaveChangesAsync(cancellationToken);

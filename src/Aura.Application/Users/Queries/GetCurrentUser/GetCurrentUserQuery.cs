@@ -21,7 +21,7 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, U
     {
         var userId = _currentUserService.GetCurrentUserId();
         var user = await _userRepository.FindByIdAsync(userId, cancellationToken)
-            ?? throw new DomainException("User not found.");
+            ?? throw new NotFoundException("User not found.");
 
         return new UserDto(
             user.Id,

@@ -32,9 +32,7 @@ public class DormitoriesController(ISender sender) : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateDormitoryCommand command)
     {
-        if (id != command.Id)
-            return BadRequest("Route and body IDs must match.");
-        await sender.Send(command);
+        await sender.Send(command with { Id = id });
         return NoContent();
     }
 

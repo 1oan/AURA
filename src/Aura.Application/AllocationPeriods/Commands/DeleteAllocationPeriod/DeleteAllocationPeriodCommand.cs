@@ -19,7 +19,7 @@ public class DeleteAllocationPeriodCommandHandler : IRequestHandler<DeleteAlloca
     public async Task<Unit> Handle(DeleteAllocationPeriodCommand request, CancellationToken cancellationToken)
     {
         var period = await _allocationPeriodRepository.FindByIdAsync(request.Id, cancellationToken)
-            ?? throw new DomainException($"Allocation period with id '{request.Id}' was not found.");
+            ?? throw new NotFoundException($"Allocation period with id '{request.Id}' was not found.");
 
         if (period.Status != AllocationPeriodStatus.Draft)
             throw new DomainException("Only draft allocation periods can be deleted.");

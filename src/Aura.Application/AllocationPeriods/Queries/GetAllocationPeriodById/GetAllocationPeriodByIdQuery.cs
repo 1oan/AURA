@@ -19,7 +19,7 @@ public class GetAllocationPeriodByIdQueryHandler : IRequestHandler<GetAllocation
     public async Task<AllocationPeriodDto> Handle(GetAllocationPeriodByIdQuery request, CancellationToken cancellationToken)
     {
         var period = await _allocationPeriodRepository.FindByIdAsync(request.Id, cancellationToken)
-            ?? throw new DomainException($"Allocation period with id '{request.Id}' was not found.");
+            ?? throw new NotFoundException($"Allocation period with id '{request.Id}' was not found.");
 
         return new AllocationPeriodDto(period.Id, period.Name, period.StartDate, period.EndDate, period.Status.ToString());
     }

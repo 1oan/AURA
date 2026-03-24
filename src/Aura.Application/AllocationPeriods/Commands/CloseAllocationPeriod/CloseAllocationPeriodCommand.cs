@@ -18,7 +18,7 @@ public class CloseAllocationPeriodCommandHandler : IRequestHandler<CloseAllocati
     public async Task<Unit> Handle(CloseAllocationPeriodCommand request, CancellationToken cancellationToken)
     {
         var period = await _allocationPeriodRepository.FindByIdAsync(request.Id, cancellationToken)
-            ?? throw new DomainException($"Allocation period with id '{request.Id}' was not found.");
+            ?? throw new NotFoundException($"Allocation period with id '{request.Id}' was not found.");
 
         period.Close();
 

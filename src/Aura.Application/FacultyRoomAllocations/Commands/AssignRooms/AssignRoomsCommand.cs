@@ -26,10 +26,10 @@ public class AssignRoomsCommandHandler : IRequestHandler<AssignRoomsCommand, int
     public async Task<int> Handle(AssignRoomsCommand request, CancellationToken cancellationToken)
     {
         var faculty = await _facultyRepository.FindByIdAsync(request.FacultyId, cancellationToken)
-            ?? throw new DomainException($"Faculty '{request.FacultyId}' not found.");
+            ?? throw new NotFoundException($"Faculty '{request.FacultyId}' not found.");
 
         var period = await _allocationPeriodRepository.FindByIdAsync(request.AllocationPeriodId, cancellationToken)
-            ?? throw new DomainException($"Allocation period '{request.AllocationPeriodId}' not found.");
+            ?? throw new NotFoundException($"Allocation period '{request.AllocationPeriodId}' not found.");
 
         foreach (var roomId in request.RoomIds)
         {

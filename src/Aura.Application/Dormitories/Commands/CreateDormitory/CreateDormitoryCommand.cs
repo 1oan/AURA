@@ -22,7 +22,7 @@ public class CreateDormitoryCommandHandler : IRequestHandler<CreateDormitoryComm
     public async Task<DormitoryDto> Handle(CreateDormitoryCommand request, CancellationToken cancellationToken)
     {
         var campus = await _campusRepository.FindByIdAsync(request.CampusId, cancellationToken)
-            ?? throw new DomainException($"Campus with id '{request.CampusId}' was not found.");
+            ?? throw new NotFoundException($"Campus with id '{request.CampusId}' was not found.");
 
         var dormitory = Dormitory.Create(request.Name, campus.Id);
 

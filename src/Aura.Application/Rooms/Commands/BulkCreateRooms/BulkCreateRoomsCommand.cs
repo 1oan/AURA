@@ -24,7 +24,7 @@ public class BulkCreateRoomsCommandHandler : IRequestHandler<BulkCreateRoomsComm
     public async Task<int> Handle(BulkCreateRoomsCommand request, CancellationToken cancellationToken)
     {
         _ = await _dormitoryRepository.FindByIdAsync(request.DormitoryId, cancellationToken)
-            ?? throw new DomainException($"Dormitory with id '{request.DormitoryId}' was not found.");
+            ?? throw new NotFoundException($"Dormitory with id '{request.DormitoryId}' was not found.");
 
         var existingRooms = await _roomRepository.GetByDormitoryIdAsync(request.DormitoryId, cancellationToken);
         var existingNumbers = existingRooms.Select(r => r.Number).ToHashSet(StringComparer.OrdinalIgnoreCase);

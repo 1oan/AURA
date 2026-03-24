@@ -19,7 +19,7 @@ public class UpdateRoomCommandHandler : IRequestHandler<UpdateRoomCommand, Unit>
     public async Task<Unit> Handle(UpdateRoomCommand request, CancellationToken cancellationToken)
     {
         var room = await _roomRepository.FindByIdAsync(request.Id, cancellationToken)
-            ?? throw new DomainException($"Room with id '{request.Id}' was not found.");
+            ?? throw new NotFoundException($"Room with id '{request.Id}' was not found.");
 
         if (!Enum.TryParse<Gender>(request.Gender, ignoreCase: true, out var gender))
             throw new DomainException($"Invalid gender value '{request.Gender}'. Valid values are: Male, Female.");

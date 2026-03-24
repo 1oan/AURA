@@ -40,9 +40,7 @@ public class RoomsController(ISender sender) : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateRoomCommand command)
     {
-        if (id != command.Id)
-            return BadRequest("Route and body IDs must match.");
-        await sender.Send(command);
+        await sender.Send(command with { Id = id });
         return NoContent();
     }
 

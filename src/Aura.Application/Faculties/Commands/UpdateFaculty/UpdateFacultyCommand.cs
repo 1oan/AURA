@@ -18,7 +18,7 @@ public class UpdateFacultyCommandHandler : IRequestHandler<UpdateFacultyCommand,
     public async Task<Unit> Handle(UpdateFacultyCommand request, CancellationToken cancellationToken)
     {
         var faculty = await _facultyRepository.FindByIdAsync(request.Id, cancellationToken)
-            ?? throw new DomainException($"Faculty with id '{request.Id}' was not found.");
+            ?? throw new NotFoundException($"Faculty with id '{request.Id}' was not found.");
 
         faculty.Update(request.Name, request.Abbreviation);
 

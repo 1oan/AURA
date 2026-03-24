@@ -18,7 +18,7 @@ public class UpdateDormitoryCommandHandler : IRequestHandler<UpdateDormitoryComm
     public async Task<Unit> Handle(UpdateDormitoryCommand request, CancellationToken cancellationToken)
     {
         var dormitory = await _dormitoryRepository.FindByIdAsync(request.Id, cancellationToken)
-            ?? throw new DomainException($"Dormitory with id '{request.Id}' was not found.");
+            ?? throw new NotFoundException($"Dormitory with id '{request.Id}' was not found.");
 
         dormitory.Update(request.Name);
 

@@ -47,6 +47,19 @@ public class ExceptionHandlingMiddleware
 
             await context.Response.WriteAsync(JsonSerializer.Serialize(response));
         }
+        catch (NotFoundException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            context.Response.ContentType = "application/json";
+
+            var response = new
+            {
+                type = "NotFound",
+                detail = ex.Message
+            };
+
+            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        }
         catch (DomainException ex)
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;

@@ -23,7 +23,7 @@ public class CreateRoomCommandHandler : IRequestHandler<CreateRoomCommand, RoomD
     public async Task<RoomDto> Handle(CreateRoomCommand request, CancellationToken cancellationToken)
     {
         var dormitory = await _dormitoryRepository.FindByIdAsync(request.DormitoryId, cancellationToken)
-            ?? throw new DomainException($"Dormitory with id '{request.DormitoryId}' was not found.");
+            ?? throw new NotFoundException($"Dormitory with id '{request.DormitoryId}' was not found.");
 
         if (!Enum.TryParse<Gender>(request.Gender, ignoreCase: true, out var gender))
             throw new DomainException($"Invalid gender value '{request.Gender}'. Valid values are: Male, Female.");

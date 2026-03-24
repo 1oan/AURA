@@ -18,7 +18,7 @@ public class UpdateCampusCommandHandler : IRequestHandler<UpdateCampusCommand, U
     public async Task<Unit> Handle(UpdateCampusCommand request, CancellationToken cancellationToken)
     {
         var campus = await _campusRepository.FindByIdAsync(request.Id, cancellationToken)
-            ?? throw new DomainException($"Campus with id '{request.Id}' was not found.");
+            ?? throw new NotFoundException($"Campus with id '{request.Id}' was not found.");
 
         campus.Update(request.Name, request.Address);
 

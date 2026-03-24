@@ -19,7 +19,7 @@ public class GetFacultyByIdQueryHandler : IRequestHandler<GetFacultyByIdQuery, F
     public async Task<FacultyDto> Handle(GetFacultyByIdQuery request, CancellationToken cancellationToken)
     {
         var faculty = await _facultyRepository.FindByIdAsync(request.Id, cancellationToken)
-            ?? throw new DomainException($"Faculty with id '{request.Id}' was not found.");
+            ?? throw new NotFoundException($"Faculty with id '{request.Id}' was not found.");
 
         return new FacultyDto(faculty.Id, faculty.Name, faculty.Abbreviation);
     }

@@ -20,7 +20,7 @@ public class GetDormitoryByIdQueryHandler : IRequestHandler<GetDormitoryByIdQuer
     public async Task<DormitoryDetailDto> Handle(GetDormitoryByIdQuery request, CancellationToken cancellationToken)
     {
         var dormitory = await _dormitoryRepository.FindByIdWithRoomsAsync(request.Id, cancellationToken)
-            ?? throw new DomainException($"Dormitory with id '{request.Id}' was not found.");
+            ?? throw new NotFoundException($"Dormitory with id '{request.Id}' was not found.");
 
         var rooms = dormitory.Rooms
             .Select(r => new RoomDto(r.Id, r.Number, r.DormitoryId, r.Floor, r.Capacity, r.Gender.ToString()))
