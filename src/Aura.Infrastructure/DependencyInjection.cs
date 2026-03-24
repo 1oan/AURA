@@ -2,6 +2,7 @@ using Aura.Application.Common.Interfaces;
 using Aura.Infrastructure.Auth;
 using Aura.Infrastructure.Persistence;
 using Aura.Infrastructure.Persistence.Repositories;
+using Aura.Infrastructure.Persistence.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<IAllocationPeriodRepository, AllocationPeriodRepository>();
         services.AddScoped<IFacultyRoomAllocationRepository, FacultyRoomAllocationRepository>();
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
+        services.AddScoped<DataSeeder>();
 
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();

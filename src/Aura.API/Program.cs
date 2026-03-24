@@ -4,6 +4,7 @@ using Aura.API.Services;
 using Aura.Application;
 using Aura.Application.Common.Interfaces;
 using Aura.Infrastructure;
+using Aura.Infrastructure.Persistence.Seeding;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -53,6 +54,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    using var scope = app.Services.CreateScope();
+    var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+    await seeder.SeedAsync();
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
