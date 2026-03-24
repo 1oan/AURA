@@ -26,6 +26,12 @@ public static class DependencyInjection
             }));
 
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<ICampusRepository, CampusRepository>();
+        services.AddScoped<IDormitoryRepository, DormitoryRepository>();
+        services.AddScoped<IRoomRepository, RoomRepository>();
+        services.AddScoped<IFacultyRepository, FacultyRepository>();
+        services.AddScoped<IAllocationPeriodRepository, AllocationPeriodRepository>();
+        services.AddScoped<IFacultyRoomAllocationRepository, FacultyRoomAllocationRepository>();
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
