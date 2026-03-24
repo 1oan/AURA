@@ -19,6 +19,9 @@ public class RoomRepository(AuraDbContext context) : IRoomRepository
     public async Task<bool> ExistsByNumberInDormitoryAsync(Guid dormitoryId, string number, CancellationToken cancellationToken = default)
         => await context.Rooms.AnyAsync(r => r.DormitoryId == dormitoryId && r.Number == number, cancellationToken);
 
+    public async Task AddAsync(Room room, CancellationToken cancellationToken = default)
+        => await context.Rooms.AddAsync(room, cancellationToken);
+
     public async Task AddRangeAsync(IEnumerable<Room> rooms, CancellationToken cancellationToken = default)
         => await context.Rooms.AddRangeAsync(rooms, cancellationToken);
 

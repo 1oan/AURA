@@ -39,6 +39,9 @@ public class FacultyRoomAllocationRepository(AuraDbContext context) : IFacultyRo
             .Where(a => a.RoomId == roomId && a.AllocationPeriodId == periodId)
             .ToListAsync(cancellationToken);
 
+    public async Task<bool> AnyByRoomIdAsync(Guid roomId, CancellationToken cancellationToken = default)
+        => await context.FacultyRoomAllocations.AnyAsync(a => a.RoomId == roomId, cancellationToken);
+
     public async Task AddRangeAsync(IEnumerable<FacultyRoomAllocation> allocations, CancellationToken cancellationToken = default)
         => await context.FacultyRoomAllocations.AddRangeAsync(allocations, cancellationToken);
 
