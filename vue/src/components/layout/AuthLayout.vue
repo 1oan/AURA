@@ -8,29 +8,28 @@ const { theme } = useTheme()
 <template>
   <div class="grid min-h-screen lg:grid-cols-2">
     <!-- Brand panel -->
-    <div class="relative hidden flex-col items-center justify-center overflow-hidden bg-primary p-10 lg:flex">
-      <div class="absolute inset-0 bg-gradient-to-br from-primary via-primary to-primary/80" />
+    <div class="relative hidden flex-col items-center justify-center overflow-hidden bg-primary lg:flex">
       <div
-        class="absolute inset-0 opacity-[0.03]"
+        class="absolute inset-0 opacity-[0.06]"
         :style="{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
-          backgroundSize: '24px 24px',
+          backgroundImage: `
+            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
+          `,
+          backgroundSize: '32px 32px',
         }"
       />
 
-      <div class="relative flex flex-col items-center space-y-6 text-center">
-        <div class="flex size-16 items-center justify-center rounded-2xl bg-white/20 text-2xl font-bold text-white backdrop-blur-sm">
+      <div class="relative flex flex-col items-center space-y-8 text-center">
+        <div class="flex size-14 items-center justify-center rounded-lg bg-white/15 text-xl font-bold text-white backdrop-blur-sm">
           A
         </div>
-        <div class="space-y-3">
-          <h1 class="text-3xl font-bold tracking-tight text-white">AURA</h1>
-          <p class="text-sm font-medium uppercase tracking-widest text-white/60">
+        <div class="space-y-2">
+          <h1 class="text-2xl font-semibold tracking-tight text-white">AURA</h1>
+          <p class="text-[11px] font-medium uppercase tracking-[0.2em] text-white/50">
             Automated University Room Allocation
           </p>
         </div>
-        <p class="max-w-xs text-sm leading-relaxed text-white/50">
-          From preferences to placement, all in one platform.
-        </p>
       </div>
     </div>
 
@@ -38,15 +37,15 @@ const { theme } = useTheme()
     <div class="flex flex-col">
       <div class="flex items-center justify-between p-4 lg:justify-end">
         <div class="flex items-center gap-2 lg:hidden">
-          <div class="flex size-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
+          <div class="flex size-7 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
             A
           </div>
-          <span class="font-semibold">AURA</span>
+          <span class="text-sm font-semibold">AURA</span>
         </div>
-        <div class="flex items-center gap-0.5 rounded-lg bg-muted p-0.5">
+        <div class="flex items-center gap-0.5 rounded-md bg-muted p-0.5">
           <button
             :class="[
-              'flex size-7 items-center justify-center rounded-md transition-all duration-200',
+              'flex size-7 items-center justify-center rounded-sm transition-all duration-150',
               theme === 'light' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
             ]"
             title="Light"
@@ -56,7 +55,7 @@ const { theme } = useTheme()
           </button>
           <button
             :class="[
-              'flex size-7 items-center justify-center rounded-md transition-all duration-200',
+              'flex size-7 items-center justify-center rounded-sm transition-all duration-150',
               theme === 'dark' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
             ]"
             title="Dark"
@@ -66,7 +65,7 @@ const { theme } = useTheme()
           </button>
           <button
             :class="[
-              'flex size-7 items-center justify-center rounded-md transition-all duration-200',
+              'flex size-7 items-center justify-center rounded-sm transition-all duration-150',
               theme === 'system' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
             ]"
             title="System"

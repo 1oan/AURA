@@ -29,12 +29,12 @@ const pageTitle = computed(() => {
     <AppSidebar />
     <SidebarInset>
       <header
-        class="flex h-14 shrink-0 items-center gap-2 border-b border-border/50 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12"
+        class="flex h-12 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-10"
       >
-        <div class="flex items-center gap-3 px-4">
-          <SidebarTrigger class="-ml-1 size-7 text-muted-foreground hover:text-foreground" />
-          <Separator orientation="vertical" class="h-4" />
-          <span class="text-[13px] font-medium text-muted-foreground">{{ pageTitle }}</span>
+        <div class="flex items-center gap-2.5 px-4">
+          <SidebarTrigger class="-ml-1 size-6 text-muted-foreground hover:text-foreground" />
+          <Separator orientation="vertical" class="h-3.5" />
+          <span class="text-[13px] font-medium text-foreground/70">{{ pageTitle }}</span>
         </div>
       </header>
       <main class="flex-1 overflow-auto p-6">

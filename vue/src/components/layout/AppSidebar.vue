@@ -44,10 +44,13 @@ interface NavItem {
   title: string
   url: string
   icon: Component
+  roles?: string[]
 }
 
 const route = useRoute()
 const authStore = useAuthStore()
+
+const userRole = computed(() => authStore.user?.role ?? '')
 
 const mainNav: NavItem[] = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
@@ -61,11 +64,17 @@ const managementNav: NavItem[] = [
 ]
 
 const allocationNav: NavItem[] = [
-  { title: 'Students', url: '/students', icon: Users },
+  { title: 'Students', url: '/students', icon: Users, roles: ['SuperAdmin', 'FacultyAdmin'] },
   { title: 'Preferences', url: '/preferences', icon: ListOrdered },
-  { title: 'Room Assignment', url: '/room-assignment', icon: DoorOpen },
+  { title: 'Room Assignment', url: '/room-assignment', icon: DoorOpen, roles: ['SuperAdmin', 'FacultyAdmin'] },
   { title: 'Confirmations', url: '/confirmations', icon: CheckCircle2 },
 ]
+
+const isAdmin = computed(() => ['SuperAdmin', 'FacultyAdmin'].includes(userRole.value))
+
+function visibleItems(items: NavItem[]) {
+  return items.filter(item => !item.roles || item.roles.includes(userRole.value))
+}
 
 const currentPath = computed(() => route.path)
 
@@ -76,20 +85,20 @@ function isActive(url: string) {
 </script>
 
 <template>
-  <Sidebar collapsible="icon" class="border-r-0">
+  <Sidebar collapsible="icon" class="border-r">
     <SidebarHeader class="p-4">
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" as-child class="hover:bg-transparent active:bg-transparent">
             <router-link to="/" class="flex items-center gap-3">
               <div
-                class="flex aspect-square size-9 items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground shadow-sm"
+                class="flex aspect-square size-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground"
               >
                 A
               </div>
               <div class="grid flex-1 text-left leading-tight">
-                <span class="text-base font-semibold tracking-tight">AURA</span>
-                <span class="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                <span class="text-sm font-semibold tracking-tight">AURA</span>
+                <span class="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">
                   Room Allocation
                 </span>
               </div>
@@ -109,11 +118,11 @@ function isActive(url: string) {
               <SidebarMenuButton
                 as-child
                 :data-active="isActive(item.url)"
-                class="h-9 transition-colors duration-150"
+                class="h-8 transition-colors duration-100"
               >
                 <router-link :to="item.url">
-                  <component :is="item.icon" class="size-[18px]" />
-                  <span class="text-[13px] font-medium">{{ item.title }}</span>
+                  <component :is="item.icon" class="size-4" />
+                  <span class="text-[13px]">{{ item.title }}</span>
                 </router-link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -121,8 +130,8 @@ function isActive(url: string) {
         </SidebarGroupContent>
       </SidebarGroup>
 
-      <SidebarGroup>
-        <SidebarGroupLabel class="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+      <SidebarGroup v-if="isAdmin">
+        <SidebarGroupLabel class="mb-0.5 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
           Management
         </SidebarGroupLabel>
         <SidebarGroupContent>
@@ -131,11 +140,11 @@ function isActive(url: string) {
               <SidebarMenuButton
                 as-child
                 :data-active="isActive(item.url)"
-                class="h-9 transition-colors duration-150"
+                class="h-8 transition-colors duration-100"
               >
                 <router-link :to="item.url">
-                  <component :is="item.icon" class="size-[18px]" />
-                  <span class="text-[13px] font-medium">{{ item.title }}</span>
+                  <component :is="item.icon" class="size-4" />
+                  <span class="text-[13px]">{{ item.title }}</span>
                 </router-link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -144,20 +153,20 @@ function isActive(url: string) {
       </SidebarGroup>
 
       <SidebarGroup>
-        <SidebarGroupLabel class="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+        <SidebarGroupLabel class="mb-0.5 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
           Allocation
         </SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            <SidebarMenuItem v-for="item in allocationNav" :key="item.title">
+            <SidebarMenuItem v-for="item in visibleItems(allocationNav)" :key="item.title">
               <SidebarMenuButton
                 as-child
                 :data-active="isActive(item.url)"
-                class="h-9 transition-colors duration-150"
+                class="h-8 transition-colors duration-100"
               >
                 <router-link :to="item.url">
-                  <component :is="item.icon" class="size-[18px]" />
-                  <span class="text-[13px] font-medium">{{ item.title }}</span>
+                  <component :is="item.icon" class="size-4" />
+                  <span class="text-[13px]">{{ item.title }}</span>
                 </router-link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -172,11 +181,11 @@ function isActive(url: string) {
               <SidebarMenuButton
                 as-child
                 :data-active="isActive('/settings')"
-                class="h-9 transition-colors duration-150"
+                class="h-8 transition-colors duration-100"
               >
                 <router-link to="/settings">
-                  <Settings class="size-[18px]" />
-                  <span class="text-[13px] font-medium">Settings</span>
+                  <Settings class="size-4" />
+                  <span class="text-[13px]">Settings</span>
                 </router-link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -194,16 +203,16 @@ function isActive(url: string) {
             <DropdownMenuTrigger as-child>
               <SidebarMenuButton
                 size="lg"
-                class="w-full transition-colors duration-150"
+                class="w-full transition-colors duration-100"
               >
-                <Avatar class="size-7 rounded-lg">
-                  <AvatarFallback class="rounded-lg bg-primary/10 text-xs font-semibold text-primary">
-                    SA
+                <Avatar class="size-7 rounded-md">
+                  <AvatarFallback class="rounded-md bg-primary/10 text-[11px] font-semibold text-primary">
+                    {{ authStore.user?.firstName?.[0] ?? '' }}{{ authStore.user?.lastName?.[0] ?? '' }}
                   </AvatarFallback>
                 </Avatar>
                 <div class="grid flex-1 text-left text-sm leading-tight">
-                  <span class="truncate text-[13px] font-medium">Super Admin</span>
-                  <span class="truncate text-[11px] text-muted-foreground">admin@uaic.ro</span>
+                  <span class="truncate text-[13px] font-medium">{{ authStore.user?.firstName }} {{ authStore.user?.lastName }}</span>
+                  <span class="truncate text-[11px] text-muted-foreground">{{ authStore.user?.email }}</span>
                 </div>
                 <ChevronsUpDown class="ml-auto size-4 text-muted-foreground" />
               </SidebarMenuButton>
