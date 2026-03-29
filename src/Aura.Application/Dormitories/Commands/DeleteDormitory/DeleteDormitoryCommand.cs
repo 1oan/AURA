@@ -21,7 +21,7 @@ public class DeleteDormitoryCommandHandler : IRequestHandler<DeleteDormitoryComm
             ?? throw new NotFoundException($"Dormitory with id '{request.Id}' was not found.");
 
         if (await _dormitoryRepository.HasRoomsAsync(request.Id, cancellationToken))
-            throw new DomainException("Cannot delete dormitory that has rooms.");
+            throw new ConflictException("Cannot delete dormitory that has rooms.");
 
         _dormitoryRepository.Remove(dormitory);
         await _dormitoryRepository.SaveChangesAsync(cancellationToken);

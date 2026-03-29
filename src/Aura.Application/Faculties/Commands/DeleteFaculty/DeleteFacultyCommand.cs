@@ -21,7 +21,7 @@ public class DeleteFacultyCommandHandler : IRequestHandler<DeleteFacultyCommand,
             ?? throw new NotFoundException($"Faculty with id '{request.Id}' was not found.");
 
         if (await _facultyRepository.HasAllocationsAsync(request.Id, cancellationToken))
-            throw new DomainException("Cannot delete faculty that has room allocations.");
+            throw new ConflictException("Cannot delete faculty that has room allocations.");
 
         _facultyRepository.Remove(faculty);
         await _facultyRepository.SaveChangesAsync(cancellationToken);

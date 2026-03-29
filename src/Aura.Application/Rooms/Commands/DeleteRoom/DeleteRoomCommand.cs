@@ -25,7 +25,7 @@ public class DeleteRoomCommandHandler : IRequestHandler<DeleteRoomCommand, Unit>
             ?? throw new NotFoundException($"Room with id '{request.Id}' was not found.");
 
         if (await _allocationRepository.AnyByRoomIdAsync(request.Id, cancellationToken))
-            throw new DomainException("Cannot delete room that has faculty allocations.");
+            throw new ConflictException("Cannot delete room that has faculty allocations.");
 
         _roomRepository.Remove(room);
         await _roomRepository.SaveChangesAsync(cancellationToken);

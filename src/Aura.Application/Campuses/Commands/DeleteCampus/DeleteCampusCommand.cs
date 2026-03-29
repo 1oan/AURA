@@ -21,7 +21,7 @@ public class DeleteCampusCommandHandler : IRequestHandler<DeleteCampusCommand, U
             ?? throw new NotFoundException($"Campus with id '{request.Id}' was not found.");
 
         if (await _campusRepository.HasDormitoriesAsync(request.Id, cancellationToken))
-            throw new DomainException("Cannot delete campus that has dormitories.");
+            throw new ConflictException("Cannot delete campus that has dormitories.");
 
         _campusRepository.Remove(campus);
         await _campusRepository.SaveChangesAsync(cancellationToken);
