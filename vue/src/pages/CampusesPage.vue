@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { toast } from 'vue-sonner'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,7 +19,6 @@ import {
 } from '@/components/ui/dialog'
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -42,6 +42,7 @@ import {
   DoorOpen,
   BedDouble,
   Layers,
+  X,
 } from 'lucide-vue-next'
 import { ApiError } from '@/api/client'
 import {
@@ -60,6 +61,7 @@ import {
 } from '@/api/dormitories'
 import type { DormitoryDto } from '@/api/dormitories'
 import {
+  createRoom,
   bulkCreateRooms,
   updateRoom,
   deleteRoom,
@@ -90,12 +92,18 @@ const dormitoryForm = ref({ id: '', name: '', campusId: '' })
 const dormitoryFormError = ref('')
 const dormitoryFormSaving = ref(false)
 
-// --- Room Dialog (single) ---
+// --- Room Edit Dialog ---
 const roomDialogOpen = ref(false)
-const roomDialogMode = ref<'create' | 'edit'>('create')
 const roomForm = ref({ id: '', number: '', dormitoryId: '', floor: 0, capacity: 2, gender: 'Male' })
 const roomFormError = ref('')
 const roomFormSaving = ref(false)
+
+// --- Inline Room Add ---
+const inlineAdd = ref<{ dormitoryId: string; floor: number; gender: string } | null>(null)
+const inlineAddNumber = ref('')
+const inlineAddCapacity = ref(3)
+const inlineAddError = ref('')
+const inlineAddSaving = ref(false)
 
 // --- Bulk Room Dialog ---
 const bulkRoomDialogOpen = ref(false)
@@ -218,12 +226,14 @@ async function saveCampus() {
     if (campusDialogMode.value === 'create') {
       const created = await createCampus(payload)
       campuses.value.push(created)
+      toast.success('Campus created successfully.')
     } else {
       await updateCampus(campusForm.value.id, payload)
       const idx = campuses.value.findIndex((c) => c.id === campusForm.value.id)
       if (idx !== -1) {
         campuses.value[idx] = { id: campuses.value[idx]!.id, name: payload.name, address: payload.address ?? null }
       }
+      toast.success('Campus updated successfully.')
     }
     campusDialogOpen.value = false
   } catch (e) {
@@ -273,6 +283,7 @@ async function saveDormitory() {
       })
       const existing = campusDormitories.value.get(dormitoryForm.value.campusId) ?? []
       campusDormitories.value.set(dormitoryForm.value.campusId, [...existing, created])
+      toast.success('Dormitory created successfully.')
     } else {
       await updateDormitory(dormitoryForm.value.id, { name: dormitoryForm.value.name.trim() })
       const dorms = campusDormitories.value.get(dormitoryForm.value.campusId)
@@ -280,6 +291,7 @@ async function saveDormitory() {
         const idx = dorms.findIndex((d) => d.id === dormitoryForm.value.id)
         if (idx !== -1) dorms[idx] = { id: dorms[idx]!.id, name: dormitoryForm.value.name.trim(), campusId: dorms[idx]!.campusId }
       }
+      toast.success('Dormitory updated successfully.')
     }
     dormitoryDialogOpen.value = false
   } catch (e) {
@@ -299,9 +311,50 @@ function confirmDeleteDormitory(dormitory: DormitoryDto) {
   deleteDialogOpen.value = true
 }
 
+// --- Inline Room Add ---
+function startInlineAdd(dormitoryId: string, floor: number, gender: string, capacity: number) {
+  inlineAdd.value = { dormitoryId, floor, gender }
+  inlineAddNumber.value = ''
+  inlineAddCapacity.value = capacity
+  inlineAddError.value = ''
+}
+
+function cancelInlineAdd() {
+  inlineAdd.value = null
+  inlineAddError.value = ''
+}
+
+async function submitInlineAdd() {
+  if (!inlineAdd.value || !inlineAddNumber.value.trim()) {
+    inlineAddError.value = 'Room number is required.'
+    return
+  }
+  inlineAddSaving.value = true
+  inlineAddError.value = ''
+  try {
+    const newRoom = await createRoom({
+      number: inlineAddNumber.value.trim(),
+      dormitoryId: inlineAdd.value.dormitoryId,
+      floor: inlineAdd.value.floor,
+      capacity: inlineAddCapacity.value,
+      gender: inlineAdd.value.gender,
+    })
+    const rooms = dormitoryRooms.value.get(inlineAdd.value.dormitoryId)
+    if (rooms) rooms.push(newRoom)
+    toast.success(`Room ${newRoom.number} added.`)
+    inlineAdd.value = null
+  } catch (e) {
+    if (e instanceof ApiError) {
+      const data = e.data as { detail?: string }
+      inlineAddError.value = data.detail ?? 'Failed to create room.'
+    }
+  } finally {
+    inlineAddSaving.value = false
+  }
+}
+
 // --- Room CRUD ---
 function openEditRoom(room: RoomDto) {
-  roomDialogMode.value = 'edit'
   roomForm.value = {
     id: room.id,
     number: room.number,
@@ -342,6 +395,7 @@ async function saveRoom() {
         }
       }
     }
+    toast.success('Room updated successfully.')
     roomDialogOpen.value = false
   } catch (e) {
     if (e instanceof ApiError) {
@@ -405,6 +459,7 @@ async function saveBulkRooms() {
     const detail = await getDormitoryById(bulkRoomDormitoryId.value)
     dormitoryRooms.value.set(bulkRoomDormitoryId.value, detail.rooms)
     bulkRoomDialogOpen.value = false
+    toast.success('Rooms generated successfully.')
   } catch (e) {
     if (e instanceof ApiError) {
       const data = e.data as { detail?: string }
@@ -448,6 +503,7 @@ async function executeDelete() {
       }
     }
     deleteDialogOpen.value = false
+    toast.success(`${deleteTarget.value.name} deleted.`)
   } catch (e) {
     if (e instanceof ApiError) {
       const data = e.data as { detail?: string }
@@ -658,6 +714,57 @@ function genderVariant(gender: string) {
                                 </button>
                               </div>
                             </div>
+
+                            <!-- Inline add form -->
+                            <div
+                              v-if="inlineAdd?.dormitoryId === dorm.id && inlineAdd?.floor === floor"
+                              class="flex items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-sm"
+                            >
+                              <BedDouble class="size-3.5 text-primary/60" />
+                              <input
+                                v-model="inlineAddNumber"
+                                type="text"
+                                placeholder="Room #"
+                                class="w-16 rounded border bg-background px-2 py-0.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                                :disabled="inlineAddSaving"
+                                @keydown.enter="submitInlineAdd"
+                                @keydown.escape="cancelInlineAdd"
+                              />
+                              <span class="text-xs text-muted-foreground">Cap:</span>
+                              <input
+                                v-numeric
+                                v-model.number="inlineAddCapacity"
+                                type="text"
+                                inputmode="numeric"
+                                class="w-10 rounded border bg-background px-1.5 py-0.5 text-center text-sm"
+                                :disabled="inlineAddSaving"
+                                @keydown.enter="submitInlineAdd"
+                                @keydown.escape="cancelInlineAdd"
+                              />
+                              <Button
+                                size="sm"
+                                class="h-6 px-2 text-xs"
+                                :disabled="inlineAddSaving || !inlineAddNumber.trim()"
+                                @click="submitInlineAdd"
+                              >
+                                Add
+                              </Button>
+                              <button
+                                class="rounded p-0.5 text-muted-foreground hover:text-foreground"
+                                @click="cancelInlineAdd"
+                              >
+                                <X class="size-3.5" />
+                              </button>
+                            </div>
+
+                            <!-- Add room chip -->
+                            <button
+                              v-else
+                              class="flex items-center gap-1 rounded-md border border-dashed px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                              @click="startInlineAdd(dorm.id, floor, rooms[0]?.gender ?? 'Male', rooms[0]?.capacity ?? 3)"
+                            >
+                              <Plus class="size-3.5" />
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -723,7 +830,7 @@ function genderVariant(gender: string) {
       </DialogContent>
     </Dialog>
 
-    <!-- Edit Room Dialog -->
+    <!-- Room Dialog (Create / Edit) -->
     <Dialog v-model:open="roomDialogOpen">
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
@@ -738,11 +845,11 @@ function genderVariant(gender: string) {
             </div>
             <div class="space-y-2">
               <Label for="room-floor">Floor</Label>
-              <Input id="room-floor" v-model.number="roomForm.floor" type="number" min="0" required />
+              <Input id="room-floor" v-numeric v-model.number="roomForm.floor" type="text" inputmode="numeric" required />
             </div>
             <div class="space-y-2">
               <Label for="room-capacity">Capacity</Label>
-              <Input id="room-capacity" v-model.number="roomForm.capacity" type="number" min="1" required />
+              <Input id="room-capacity" v-numeric v-model.number="roomForm.capacity" type="text" inputmode="numeric" required />
             </div>
             <div class="space-y-2">
               <Label>Gender</Label>
@@ -753,7 +860,6 @@ function genderVariant(gender: string) {
                 <SelectContent>
                   <SelectItem value="Male">Male</SelectItem>
                   <SelectItem value="Female">Female</SelectItem>
-                  <SelectItem value="Mixed">Mixed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -786,15 +892,15 @@ function genderVariant(gender: string) {
             >
               <div class="space-y-1">
                 <Label v-if="index === 0" class="text-xs">Floor</Label>
-                <Input v-model.number="config.floorNumber" type="number" min="0" />
+                <Input v-numeric v-model.number="config.floorNumber" type="text" inputmode="numeric" />
               </div>
               <div class="space-y-1">
                 <Label v-if="index === 0" class="text-xs">Rooms</Label>
-                <Input v-model.number="config.roomCount" type="number" min="1" />
+                <Input v-numeric v-model.number="config.roomCount" type="text" inputmode="numeric" />
               </div>
               <div class="space-y-1">
                 <Label v-if="index === 0" class="text-xs">Capacity</Label>
-                <Input v-model.number="config.capacity" type="number" min="1" />
+                <Input v-numeric v-model.number="config.capacity" type="text" inputmode="numeric" />
               </div>
               <div class="space-y-1">
                 <Label v-if="index === 0" class="text-xs">Gender</Label>
@@ -805,7 +911,6 @@ function genderVariant(gender: string) {
                   <SelectContent>
                     <SelectItem value="Male">Male</SelectItem>
                     <SelectItem value="Female">Female</SelectItem>
-                    <SelectItem value="Mixed">Mixed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -843,10 +948,10 @@ function genderVariant(gender: string) {
           <AlertDialogDescription>
             This will permanently delete <strong>{{ deleteTarget.name }}</strong>.
             <template v-if="deleteTarget.type === 'campus'">
-              All dormitories and rooms within it will also be deleted.
+              The campus must have no dormitories before it can be deleted.
             </template>
             <template v-else-if="deleteTarget.type === 'dormitory'">
-              All rooms within it will also be deleted.
+              The dormitory must have no rooms before it can be deleted.
             </template>
             This action cannot be undone.
           </AlertDialogDescription>
@@ -854,13 +959,13 @@ function genderVariant(gender: string) {
         <p v-if="deleteError" class="text-sm text-destructive">{{ deleteError }}</p>
         <AlertDialogFooter>
           <AlertDialogCancel :disabled="deleteLoading">Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          <Button
+            variant="destructive"
             :disabled="deleteLoading"
-            @click.prevent="executeDelete"
+            @click="executeDelete"
           >
             {{ deleteLoading ? 'Deleting...' : 'Delete' }}
-          </AlertDialogAction>
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

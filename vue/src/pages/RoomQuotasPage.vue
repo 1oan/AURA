@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { toast } from 'vue-sonner'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -116,8 +117,21 @@ function dormitoryAssignedCount(dormitoryId: string): string | null {
   return `${assigned}/${rooms.length}`
 }
 
+const selectionMode = computed<'assign' | 'remove' | null>(() => {
+  if (selectedRoomIds.value.size === 0) return null
+  const firstId = [...selectedRoomIds.value][0]!
+  return isAssignedToCurrentFaculty(firstId) ? 'remove' : 'assign'
+})
+
+function canSelect(roomId: string): boolean {
+  if (isAssignedToOtherFaculty(roomId)) return false
+  if (!selectionMode.value) return true
+  if (selectionMode.value === 'assign') return !allocationsByRoom.value.has(roomId)
+  return isAssignedToCurrentFaculty(roomId)
+}
+
 function toggleRoomSelection(roomId: string) {
-  if (isAssignedToOtherFaculty(roomId)) return
+  if (!canSelect(roomId)) return
   if (selectedRoomIds.value.has(roomId)) {
     selectedRoomIds.value.delete(roomId)
   } else {
@@ -213,6 +227,7 @@ async function handleAssign() {
   actionError.value = ''
   actionLoading.value = true
   try {
+    const count = selectedRoomIds.value.size
     await assignRooms({
       facultyId: selectedFacultyId.value,
       allocationPeriodId: selectedPeriodId.value,
@@ -220,10 +235,11 @@ async function handleAssign() {
     })
     selectedRoomIds.value.clear()
     await fetchAllocations()
+    toast.success(`${count} room${count !== 1 ? 's' : ''} assigned to ${selectedCurrentFacultyName.value}.`)
   } catch (e) {
     if (e instanceof ApiError) {
       const data = e.data as { detail?: string }
-      actionError.value = data.detail ?? 'Failed to assign rooms.'
+      toast.error(data.detail ?? 'Failed to assign rooms.')
     }
   } finally {
     actionLoading.value = false
@@ -235,6 +251,7 @@ async function handleRemove() {
   actionError.value = ''
   actionLoading.value = true
   try {
+    const count = selectedRoomIds.value.size
     await removeRoomAssignments({
       facultyId: selectedFacultyId.value,
       allocationPeriodId: selectedPeriodId.value,
@@ -242,10 +259,11 @@ async function handleRemove() {
     })
     selectedRoomIds.value.clear()
     await fetchAllocations()
+    toast.success(`${count} room assignment${count !== 1 ? 's' : ''} removed.`)
   } catch (e) {
     if (e instanceof ApiError) {
       const data = e.data as { detail?: string }
-      actionError.value = data.detail ?? 'Failed to remove room assignments.'
+      toast.error(data.detail ?? 'Failed to remove room assignments.')
     }
   } finally {
     actionLoading.value = false
@@ -435,10 +453,12 @@ async function handleRemove() {
                                   :class="{
                                     'bg-primary text-primary-foreground border-primary': isAssignedToCurrentFaculty(room.id),
                                     'bg-muted text-muted-foreground opacity-50 cursor-not-allowed': isAssignedToOtherFaculty(room.id),
-                                    'bg-card hover:border-primary cursor-pointer': !isAssignedToCurrentFaculty(room.id) && !isAssignedToOtherFaculty(room.id),
+                                    'bg-card hover:border-primary cursor-pointer': !isAssignedToCurrentFaculty(room.id) && !isAssignedToOtherFaculty(room.id) && canSelect(room.id),
+                                    'bg-card opacity-40 cursor-not-allowed': !isAssignedToCurrentFaculty(room.id) && !isAssignedToOtherFaculty(room.id) && !canSelect(room.id),
+                                    'opacity-40 cursor-not-allowed': isAssignedToCurrentFaculty(room.id) && !canSelect(room.id),
                                     'ring-2 ring-primary ring-offset-1': selectedRoomIds.has(room.id),
                                   }"
-                                  :disabled="isAssignedToOtherFaculty(room.id)"
+                                  :disabled="!canSelect(room.id)"
                                   :title="isAssignedToOtherFaculty(room.id) ? `Assigned to ${getFacultyAbbreviationForRoom(room.id)}` : ''"
                                   @click="toggleRoomSelection(room.id)"
                                 >
@@ -472,6 +492,7 @@ async function handleRemove() {
               <div class="flex items-center gap-2">
                 <p v-if="actionError" class="mr-2 text-sm text-destructive">{{ actionError }}</p>
                 <Button
+                  v-if="selectionMode === 'remove'"
                   variant="outline"
                   size="sm"
                   :disabled="actionLoading"
@@ -480,6 +501,7 @@ async function handleRemove() {
                   {{ actionLoading ? 'Processing...' : 'Remove Selected' }}
                 </Button>
                 <Button
+                  v-if="selectionMode === 'assign'"
                   size="sm"
                   :disabled="actionLoading"
                   @click="handleAssign"

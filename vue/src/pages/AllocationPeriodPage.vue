@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { toast } from 'vue-sonner'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,7 +17,6 @@ import {
 } from '@/components/ui/dialog'
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -126,12 +126,14 @@ async function save() {
     if (dialogMode.value === 'create') {
       const created = await createAllocationPeriod(payload)
       periods.value.push(created)
+      toast.success('Period created successfully.')
     } else {
       await updateAllocationPeriod(form.value.id, payload)
       const idx = periods.value.findIndex((p) => p.id === form.value.id)
       if (idx !== -1) {
         periods.value[idx] = { ...periods.value[idx]!, ...payload }
       }
+      toast.success('Period updated successfully.')
     }
     dialogOpen.value = false
   } catch (e) {
@@ -157,6 +159,7 @@ async function executeDelete() {
     await deleteAllocationPeriod(deleteTarget.value.id)
     periods.value = periods.value.filter((p) => p.id !== deleteTarget.value.id)
     deleteDialogOpen.value = false
+    toast.success(`${deleteTarget.value.name} deleted.`)
   } catch (e) {
     if (e instanceof ApiError) {
       const data = e.data as { detail?: string }
@@ -187,6 +190,7 @@ async function executeAction() {
     // Refetch to get updated statuses
     periods.value = await getAllocationPeriods()
     actionDialogOpen.value = false
+    toast.success(actionType.value === 'activate' ? 'Period activated.' : 'Period closed.')
   } catch (e) {
     if (e instanceof ApiError) {
       const data = e.data as { detail?: string }
@@ -325,13 +329,13 @@ async function executeAction() {
         <p v-if="deleteError" class="text-sm text-destructive">{{ deleteError }}</p>
         <AlertDialogFooter>
           <AlertDialogCancel :disabled="deleteLoading">Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          <Button
+            variant="destructive"
             :disabled="deleteLoading"
-            @click.prevent="executeDelete"
+            @click="executeDelete"
           >
             {{ deleteLoading ? 'Deleting...' : 'Delete' }}
-          </AlertDialogAction>
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -357,12 +361,12 @@ async function executeAction() {
         <p v-if="actionError" class="text-sm text-destructive">{{ actionError }}</p>
         <AlertDialogFooter>
           <AlertDialogCancel :disabled="actionLoading">Cancel</AlertDialogCancel>
-          <AlertDialogAction
+          <Button
             :disabled="actionLoading"
-            @click.prevent="executeAction"
+            @click="executeAction"
           >
             {{ actionLoading ? 'Processing...' : (actionType === 'activate' ? 'Activate' : 'Close') }}
-          </AlertDialogAction>
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

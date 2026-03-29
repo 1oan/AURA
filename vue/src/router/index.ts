@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -25,31 +26,31 @@ const router = createRouter({
       path: '/campuses',
       name: 'campuses',
       component: () => import('@/pages/CampusesPage.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, roles: ['SuperAdmin', 'FacultyAdmin'] },
     },
     {
       path: '/faculties',
       name: 'faculties',
       component: () => import('@/pages/FacultiesPage.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, roles: ['SuperAdmin', 'FacultyAdmin'] },
     },
     {
       path: '/room-quotas',
       name: 'room-quotas',
       component: () => import('@/pages/RoomQuotasPage.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, roles: ['SuperAdmin', 'FacultyAdmin'] },
     },
     {
       path: '/allocation',
       name: 'allocation',
       component: () => import('@/pages/AllocationPeriodPage.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, roles: ['SuperAdmin', 'FacultyAdmin'] },
     },
     {
       path: '/students',
       name: 'students',
       component: () => import('@/pages/StudentsPage.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, roles: ['SuperAdmin', 'FacultyAdmin'] },
     },
     {
       path: '/preferences',
@@ -61,7 +62,7 @@ const router = createRouter({
       path: '/room-assignment',
       name: 'room-assignment',
       component: () => import('@/pages/RoomAssignmentPage.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, roles: ['SuperAdmin', 'FacultyAdmin'] },
     },
     {
       path: '/confirmations',
@@ -78,7 +79,7 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const token = localStorage.getItem('auth_token')
 
   if (to.meta.requiresAuth && !token) {
@@ -87,6 +88,17 @@ router.beforeEach((to) => {
 
   if (to.meta.guest && token) {
     return { name: 'dashboard' }
+  }
+
+  if (to.meta.roles && token) {
+    const authStore = useAuthStore()
+    if (!authStore.user) {
+      await authStore.fetchCurrentUser()
+    }
+    const userRole = authStore.user?.role
+    if (!userRole || !(to.meta.roles as string[]).includes(userRole)) {
+      return { name: 'dashboard' }
+    }
   }
 })
 
