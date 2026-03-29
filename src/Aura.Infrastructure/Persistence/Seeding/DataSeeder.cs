@@ -8,6 +8,8 @@ public class DataSeeder(AuraDbContext context)
 {
     public async Task SeedAsync()
     {
+        await SeedSuperAdminAsync();
+
         if (await context.Campuses.AnyAsync())
             return;
 
@@ -38,6 +40,17 @@ public class DataSeeder(AuraDbContext context)
         var allocations = DistributeRoomsRoundRobin(faculties, allRooms, period.Id);
         context.FacultyRoomAllocations.AddRange(allocations);
 
+        await context.SaveChangesAsync();
+    }
+
+    private async Task SeedSuperAdminAsync()
+    {
+        if (await context.Users.AnyAsync(u => u.Role == UserRole.SuperAdmin))
+            return;
+
+        var admin = User.Create("admin@uaic.ro", "Admin", "admin", BCrypt.Net.BCrypt.HashPassword("Admin123!"));
+        admin.SetRole(UserRole.SuperAdmin);
+        context.Users.Add(admin);
         await context.SaveChangesAsync();
     }
 
@@ -92,12 +105,11 @@ public class DataSeeder(AuraDbContext context)
 
     private static List<Faculty> BuildFaculties() =>
     [
-        Faculty.Create("Computer Science", "CS"),
-        Faculty.Create("Law", "LAW"),
-        Faculty.Create("Medicine", "MED"),
-        Faculty.Create("Letters", "LIT"),
-        Faculty.Create("Economics", "ECON"),
-        Faculty.Create("Biology", "BIO"),
+        Faculty.Create("Informatica", "INF"),
+        Faculty.Create("Drept", "DRE"),
+        Faculty.Create("Litere", "LIT"),
+        Faculty.Create("Economie", "ECO"),
+        Faculty.Create("Biologie", "BIO"),
     ];
 
     // Round-robin distribution ensures each faculty gets rooms spread across all dorms

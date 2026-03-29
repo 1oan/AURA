@@ -6,6 +6,7 @@ using Aura.Application.Common.Interfaces;
 using Aura.Infrastructure;
 using Aura.Infrastructure.Persistence.Seeding;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -56,6 +57,9 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 
     using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<Aura.Infrastructure.Persistence.AuraDbContext>();
+    await db.Database.MigrateAsync();
+
     var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
     await seeder.SeedAsync();
 }

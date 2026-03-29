@@ -26,8 +26,8 @@ public class AllocationPeriod
         {
             Id = Guid.NewGuid(),
             Name = name.Trim(),
-            StartDate = startDate,
-            EndDate = endDate,
+            StartDate = DateTime.SpecifyKind(startDate, DateTimeKind.Utc),
+            EndDate = DateTime.SpecifyKind(endDate, DateTimeKind.Utc),
             Status = AllocationPeriodStatus.Draft
         };
     }
@@ -44,8 +44,8 @@ public class AllocationPeriod
             throw new DomainException("End date must be after start date.");
 
         Name = name.Trim();
-        StartDate = startDate;
-        EndDate = endDate;
+        StartDate = DateTime.SpecifyKind(startDate, DateTimeKind.Utc);
+        EndDate = DateTime.SpecifyKind(endDate, DateTimeKind.Utc);
     }
 
     public void Activate()
