@@ -19,7 +19,7 @@ public class PromoteUserCommandHandler : IRequestHandler<PromoteUserCommand, Uni
     public async Task<Unit> Handle(PromoteUserCommand request, CancellationToken cancellationToken)
     {
         var user = await _userRepository.FindByIdAsync(request.UserId, cancellationToken)
-            ?? throw new DomainException("User not found.");
+            ?? throw new NotFoundException("User not found.");
 
         user.SetRole(request.Role);
         await _userRepository.SaveChangesAsync(cancellationToken);

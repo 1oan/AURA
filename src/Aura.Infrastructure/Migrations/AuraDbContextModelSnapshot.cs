@@ -23,6 +23,162 @@ namespace Aura.Infrastructure.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Aura.Domain.Entities.AllocationPeriod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("AllocationPeriods");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.Campus", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Campuses");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.Dormitory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CampusId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampusId");
+
+                    b.ToTable("Dormitories");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.Faculty", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Abbreviation")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Abbreviation")
+                        .IsUnique();
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Faculties");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.FacultyRoomAllocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AllocationPeriodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FacultyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AllocationPeriodId");
+
+                    b.HasIndex("FacultyId");
+
+                    b.HasIndex("RoomId", "AllocationPeriodId")
+                        .IsUnique();
+
+                    b.ToTable("FacultyRoomAllocations");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.Room", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("DormitoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Floor")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Gender")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DormitoryId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("Rooms");
+                });
+
             modelBuilder.Entity("Aura.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -36,6 +192,9 @@ namespace Aura.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<Guid?>("FacultyId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -63,7 +222,78 @@ namespace Aura.Infrastructure.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
+                    b.HasIndex("FacultyId");
+
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.Dormitory", b =>
+                {
+                    b.HasOne("Aura.Domain.Entities.Campus", "Campus")
+                        .WithMany("Dormitories")
+                        .HasForeignKey("CampusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Campus");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.FacultyRoomAllocation", b =>
+                {
+                    b.HasOne("Aura.Domain.Entities.AllocationPeriod", "AllocationPeriod")
+                        .WithMany()
+                        .HasForeignKey("AllocationPeriodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aura.Domain.Entities.Faculty", "Faculty")
+                        .WithMany()
+                        .HasForeignKey("FacultyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aura.Domain.Entities.Room", "Room")
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AllocationPeriod");
+
+                    b.Navigation("Faculty");
+
+                    b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.Room", b =>
+                {
+                    b.HasOne("Aura.Domain.Entities.Dormitory", "Dormitory")
+                        .WithMany("Rooms")
+                        .HasForeignKey("DormitoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Dormitory");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.User", b =>
+                {
+                    b.HasOne("Aura.Domain.Entities.Faculty", "Faculty")
+                        .WithMany()
+                        .HasForeignKey("FacultyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Faculty");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.Campus", b =>
+                {
+                    b.Navigation("Dormitories");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.Dormitory", b =>
+                {
+                    b.Navigation("Rooms");
                 });
 #pragma warning restore 612, 618
         }
