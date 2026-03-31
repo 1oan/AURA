@@ -122,7 +122,7 @@ async function save() {
             </Select>
           </div>
         </div>
-        <p v-if="error" class="text-sm text-destructive">{{ error }}</p>
+        <p v-if="error" role="alert" class="text-sm text-destructive">{{ error }}</p>
         <DialogFooter>
           <Button type="submit" :disabled="saving">
             {{ saving ? 'Saving...' : 'Save' }}

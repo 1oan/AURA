@@ -34,7 +34,7 @@ const emit = defineEmits<{
           This action cannot be undone.
         </AlertDialogDescription>
       </AlertDialogHeader>
-      <p v-if="error" class="text-sm text-destructive">{{ error }}</p>
+      <p v-if="error" role="alert" class="text-sm text-destructive">{{ error }}</p>
       <AlertDialogFooter>
         <AlertDialogCancel :disabled="loading">Cancel</AlertDialogCancel>
         <Button

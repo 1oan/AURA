@@ -312,7 +312,7 @@ async function executeAction() {
               <Input id="period-end" v-model="form.endDate" type="date" required />
             </div>
           </div>
-          <p v-if="formError" class="text-sm text-destructive">{{ formError }}</p>
+          <p v-if="formError" role="alert" class="text-sm text-destructive">{{ formError }}</p>
           <DialogFooter>
             <Button type="submit" :disabled="formSaving">
               {{ formSaving ? 'Saving...' : 'Save' }}
@@ -332,7 +332,7 @@ async function executeAction() {
             and all associated room allocations. This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <p v-if="deleteError" class="text-sm text-destructive">{{ deleteError }}</p>
+        <p v-if="deleteError" role="alert" class="text-sm text-destructive">{{ deleteError }}</p>
         <AlertDialogFooter>
           <AlertDialogCancel :disabled="deleteLoading">Cancel</AlertDialogCancel>
           <Button
@@ -364,7 +364,7 @@ async function executeAction() {
             </template>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <p v-if="actionError" class="text-sm text-destructive">{{ actionError }}</p>
+        <p v-if="actionError" role="alert" class="text-sm text-destructive">{{ actionError }}</p>
         <AlertDialogFooter>
           <AlertDialogCancel :disabled="actionLoading">Cancel</AlertDialogCancel>
           <Button

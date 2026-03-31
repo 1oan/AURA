@@ -218,7 +218,7 @@ async function executeDelete() {
             <Label for="faculty-abbreviation">Abbreviation</Label>
             <Input id="faculty-abbreviation" v-model="form.abbreviation" placeholder="e.g. CS" required />
           </div>
-          <p v-if="formError" class="text-sm text-destructive">{{ formError }}</p>
+          <p v-if="formError" role="alert" class="text-sm text-destructive">{{ formError }}</p>
           <DialogFooter>
             <Button type="submit" :disabled="formSaving">
               {{ formSaving ? 'Saving...' : 'Save' }}
@@ -239,7 +239,7 @@ async function executeDelete() {
             This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <p v-if="deleteError" class="text-sm text-destructive">{{ deleteError }}</p>
+        <p v-if="deleteError" role="alert" class="text-sm text-destructive">{{ deleteError }}</p>
         <AlertDialogFooter>
           <AlertDialogCancel :disabled="deleteLoading">Cancel</AlertDialogCancel>
           <Button

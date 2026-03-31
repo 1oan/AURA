@@ -100,7 +100,7 @@ async function save() {
           <Label for="campus-address">Address</Label>
           <Input id="campus-address" v-model="form.address" placeholder="e.g. Str. Codrescu Nr. 1" />
         </div>
-        <p v-if="error" class="text-sm text-destructive">{{ error }}</p>
+        <p v-if="error" role="alert" class="text-sm text-destructive">{{ error }}</p>
         <DialogFooter>
           <Button type="submit" :disabled="saving">
             {{ saving ? 'Saving...' : 'Save' }}

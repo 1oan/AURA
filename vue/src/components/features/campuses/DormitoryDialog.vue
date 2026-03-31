@@ -93,7 +93,7 @@ async function save() {
           <Label for="dorm-name">Name</Label>
           <Input id="dorm-name" v-model="name" placeholder="e.g. C10" required />
         </div>
-        <p v-if="error" class="text-sm text-destructive">{{ error }}</p>
+        <p v-if="error" role="alert" class="text-sm text-destructive">{{ error }}</p>
         <DialogFooter>
           <Button type="submit" :disabled="saving">
             {{ saving ? 'Saving...' : 'Save' }}

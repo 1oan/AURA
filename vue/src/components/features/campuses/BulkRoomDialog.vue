@@ -152,7 +152,7 @@ async function save() {
           <Plus class="mr-1 size-4" />
           Add Floor
         </Button>
-        <p v-if="error" class="text-sm text-destructive">{{ error }}</p>
+        <p v-if="error" role="alert" class="text-sm text-destructive">{{ error }}</p>
         <DialogFooter>
           <Button type="submit" :disabled="saving">
             {{ saving ? 'Generating...' : 'Generate Rooms' }}
