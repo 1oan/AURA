@@ -5,8 +5,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Separator } from '@/components/ui/separator'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -14,23 +13,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ChevronRight, Building2, DoorOpen, BedDouble } from 'lucide-vue-next'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
+import { Building2, DoorOpen, BedDouble, MapPin } from 'lucide-vue-next'
 import { ApiError } from '@/api/client'
+import { useCampusDrillDown } from '@/composables/useCampusDrillDown'
 import { getAllocationPeriods } from '@/api/allocationPeriods'
 import type { AllocationPeriodDto } from '@/api/allocationPeriods'
 import { getFaculties } from '@/api/faculties'
 import type { FacultyDto } from '@/api/faculties'
-import { getCampuses, getCampusById } from '@/api/campuses'
+import { getCampuses } from '@/api/campuses'
 import type { CampusDto } from '@/api/campuses'
-import { getDormitoryById } from '@/api/dormitories'
-import type { DormitoryDto } from '@/api/dormitories'
-import type { RoomDto } from '@/api/rooms'
 import {
   getFacultyRoomAllocations,
   assignRooms,
   removeRoomAssignments,
 } from '@/api/facultyRoomAllocations'
 import type { FacultyRoomAllocationDto } from '@/api/facultyRoomAllocations'
+import type { RoomDto } from '@/api/rooms'
+
+const { level, selectedCampus, selectedDormitory, drilling, breadcrumbs, drillToCampus, drillToDormitory } = useCampusDrillDown()
 
 // --- State ---
 const periods = ref<AllocationPeriodDto[]>([])
@@ -39,16 +47,10 @@ const selectedPeriodId = ref('')
 const selectedFacultyId = ref('')
 const allAllocations = ref<FacultyRoomAllocationDto[]>([])
 const campuses = ref<CampusDto[]>([])
-const campusDormitories = ref<Map<string, DormitoryDto[]>>(new Map())
-const dormitoryRooms = ref<Map<string, RoomDto[]>>(new Map())
-const expandedCampuses = ref<Set<string>>(new Set())
-const expandedDormitories = ref<Set<string>>(new Set())
 const selectedRoomIds = ref<Set<string>>(new Set())
 
 const loadingInitial = ref(true)
 const loadingAllocations = ref(false)
-const loadingCampuses = ref<Set<string>>(new Set())
-const loadingDormitories = ref<Set<string>>(new Set())
 const actionLoading = ref(false)
 const actionError = ref('')
 
@@ -79,6 +81,16 @@ const selectedCurrentFacultyName = computed(() => {
   return f?.abbreviation ?? ''
 })
 
+// Prepend "Room Quotas" to the composable breadcrumbs
+const pageBreadcrumbs = computed(() => {
+  const crumbs = breadcrumbs.value.map((c) => ({ ...c }))
+  crumbs[0] = {
+    label: 'Room Quotas',
+    action: crumbs[0]?.action,
+  }
+  return crumbs
+})
+
 function isAssignedToCurrentFaculty(roomId: string): boolean {
   const alloc = allocationsByRoom.value.get(roomId)
   return alloc?.facultyId === selectedFacultyId.value
@@ -96,8 +108,7 @@ function getFacultyAbbreviationForRoom(roomId: string): string {
   return f?.abbreviation ?? ''
 }
 
-function roomsByFloor(dormitoryId: string) {
-  const rooms = dormitoryRooms.value.get(dormitoryId) ?? []
+function roomsByFloor(rooms: RoomDto[]) {
   const grouped = new Map<number, RoomDto[]>()
   for (const room of rooms) {
     if (!grouped.has(room.floor)) grouped.set(room.floor, [])
@@ -108,13 +119,6 @@ function roomsByFloor(dormitoryId: string) {
     floorRooms.sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true }))
   }
   return sorted
-}
-
-function dormitoryAssignedCount(dormitoryId: string): string | null {
-  const rooms = dormitoryRooms.value.get(dormitoryId)
-  if (!rooms || !selectedFacultyId.value) return null
-  const assigned = rooms.filter((r) => isAssignedToCurrentFaculty(r.id)).length
-  return `${assigned}/${rooms.length}`
 }
 
 const selectionMode = computed<'assign' | 'remove' | null>(() => {
@@ -138,6 +142,11 @@ function toggleRoomSelection(roomId: string) {
     selectedRoomIds.value.add(roomId)
   }
 }
+
+// Clear selection when navigating between levels
+watch(level, () => {
+  selectedRoomIds.value.clear()
+})
 
 // --- Data Fetching ---
 onMounted(async () => {
@@ -182,44 +191,6 @@ watch([selectedPeriodId, selectedFacultyId], () => {
     fetchAllocations()
   }
 })
-
-async function toggleCampus(campusId: string) {
-  if (expandedCampuses.value.has(campusId)) {
-    expandedCampuses.value.delete(campusId)
-    return
-  }
-  expandedCampuses.value.add(campusId)
-  if (!campusDormitories.value.has(campusId)) {
-    loadingCampuses.value.add(campusId)
-    try {
-      const detail = await getCampusById(campusId)
-      campusDormitories.value.set(campusId, detail.dormitories)
-    } catch (e) {
-      console.error('Failed to load dormitories:', e)
-    } finally {
-      loadingCampuses.value.delete(campusId)
-    }
-  }
-}
-
-async function toggleDormitory(dormitoryId: string) {
-  if (expandedDormitories.value.has(dormitoryId)) {
-    expandedDormitories.value.delete(dormitoryId)
-    return
-  }
-  expandedDormitories.value.add(dormitoryId)
-  if (!dormitoryRooms.value.has(dormitoryId)) {
-    loadingDormitories.value.add(dormitoryId)
-    try {
-      const detail = await getDormitoryById(dormitoryId)
-      dormitoryRooms.value.set(dormitoryId, detail.rooms)
-    } catch (e) {
-      console.error('Failed to load rooms:', e)
-    } finally {
-      loadingDormitories.value.delete(dormitoryId)
-    }
-  }
-}
 
 // --- Actions ---
 async function handleAssign() {
@@ -273,14 +244,57 @@ async function handleRemove() {
 
 <template>
   <AppLayout>
-    <div class="space-y-6">
-      <!-- Header -->
-      <div>
-        <h1 class="text-3xl font-bold tracking-tight">Room Quotas</h1>
-        <p class="mt-1 text-muted-foreground">
-          Distribute dormitory rooms to faculties.
-        </p>
+    <div class="space-y-3">
+      <!-- Selectors (always visible) -->
+      <div class="flex flex-wrap items-end gap-3">
+        <div class="w-56 space-y-1">
+          <label class="text-sm font-medium">Period</label>
+          <Select v-model="selectedPeriodId">
+            <SelectTrigger>
+              <SelectValue placeholder="Select period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="p in periods" :key="p.id" :value="p.id">
+                {{ p.name }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div class="w-56 space-y-1">
+          <label class="text-sm font-medium">Faculty</label>
+          <Select v-model="selectedFacultyId">
+            <SelectTrigger>
+              <SelectValue placeholder="Select faculty" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="f in faculties" :key="f.id" :value="f.id">
+                {{ f.name }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div v-if="selectedFacultyId && selectedPeriodId" class="flex items-center gap-2 pb-0.5">
+          <Badge variant="outline" class="text-sm">
+            {{ assignedToCurrentCount }} rooms assigned to {{ selectedCurrentFacultyName }}
+          </Badge>
+          <Skeleton v-if="loadingAllocations" class="h-5 w-5" />
+        </div>
       </div>
+
+      <!-- Breadcrumb -->
+      <Breadcrumb>
+        <BreadcrumbList>
+          <template v-for="(crumb, i) in pageBreadcrumbs" :key="i">
+            <BreadcrumbSeparator v-if="i > 0" />
+            <BreadcrumbItem>
+              <BreadcrumbLink v-if="crumb.action" class="cursor-pointer" @click="crumb.action">
+                {{ crumb.label }}
+              </BreadcrumbLink>
+              <BreadcrumbPage v-else>{{ crumb.label }}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </template>
+        </BreadcrumbList>
+      </Breadcrumb>
 
       <!-- Loading -->
       <div v-if="loadingInitial" class="space-y-3">
@@ -288,231 +302,162 @@ async function handleRemove() {
         <Skeleton class="h-64 w-full" />
       </div>
 
-      <template v-else>
-        <!-- Selectors -->
-        <div class="flex flex-wrap items-end gap-4">
-          <div class="w-56 space-y-1">
-            <label class="text-sm font-medium">Period</label>
-            <Select v-model="selectedPeriodId">
-              <SelectTrigger>
-                <SelectValue placeholder="Select period" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="p in periods" :key="p.id" :value="p.id">
-                  {{ p.name }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div class="w-56 space-y-1">
-            <label class="text-sm font-medium">Faculty</label>
-            <Select v-model="selectedFacultyId">
-              <SelectTrigger>
-                <SelectValue placeholder="Select faculty" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="f in faculties" :key="f.id" :value="f.id">
-                  {{ f.name }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div v-if="selectedFacultyId && selectedPeriodId" class="flex items-center gap-2 pb-0.5">
-            <Badge variant="outline" class="text-sm">
-              {{ assignedToCurrentCount }} rooms assigned to {{ selectedCurrentFacultyName }}
-            </Badge>
-            <Skeleton v-if="loadingAllocations" class="h-5 w-5" />
-          </div>
-        </div>
+      <!-- No selection state -->
+      <div
+        v-else-if="!selectedPeriodId || !selectedFacultyId"
+        class="flex flex-col items-center justify-center rounded-lg border border-dashed py-16"
+      >
+        <p class="text-muted-foreground">Select a period and faculty to manage room allocations.</p>
+      </div>
 
-        <!-- No selection -->
-        <div
-          v-if="!selectedPeriodId || !selectedFacultyId"
-          class="flex flex-col items-center justify-center rounded-lg border border-dashed py-16"
-        >
-          <p class="text-muted-foreground">Select a period and faculty to manage room allocations.</p>
+      <!-- Level 1: Campuses -->
+      <template v-else-if="level === 'campuses'">
+        <div v-if="drilling" class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <Skeleton v-for="i in 6" :key="i" class="h-20" />
         </div>
-
-        <!-- No campuses -->
         <div
           v-else-if="campuses.length === 0"
           class="flex flex-col items-center justify-center rounded-lg border border-dashed py-16"
         >
-          <Building2 class="mb-4 size-12 text-muted-foreground" />
-          <p class="text-lg font-medium">No campuses found</p>
-          <p class="text-sm text-muted-foreground">Create campuses and dormitories first.</p>
+          <Building2 class="mb-3 size-10 text-muted-foreground" />
+          <p class="text-sm font-medium">No campuses found</p>
+          <p class="text-xs text-muted-foreground">Create campuses and dormitories first.</p>
         </div>
+        <div v-else class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <Card
+            v-for="campus in campuses"
+            :key="campus.id"
+            class="cursor-pointer transition-colors hover:bg-muted/30"
+            @click="drillToCampus(campus.id)"
+          >
+            <CardContent class="flex items-center gap-3 p-3">
+              <div class="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
+                <Building2 class="size-4" />
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium leading-tight">{{ campus.name }}</p>
+                <p v-if="campus.address" class="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                  <MapPin class="size-3 shrink-0" />
+                  {{ campus.address }}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </template>
 
-        <!-- Campus tree -->
-        <template v-else>
-          <div class="space-y-3">
-            <Collapsible
-              v-for="campus in campuses"
-              :key="campus.id"
-              :open="expandedCampuses.has(campus.id)"
-              class="rounded-lg border"
-            >
-              <div class="flex items-center gap-3 px-4 py-3">
-                <CollapsibleTrigger as-child>
-                  <button
-                    class="flex items-center gap-2 rounded-md p-1 hover:bg-accent"
-                    @click="toggleCampus(campus.id)"
-                  >
-                    <ChevronRight
-                      class="size-4 shrink-0 transition-transform duration-200"
-                      :class="{ 'rotate-90': expandedCampuses.has(campus.id) }"
-                    />
-                    <Building2 class="size-4 shrink-0 text-muted-foreground" />
-                  </button>
-                </CollapsibleTrigger>
-                <span class="cursor-pointer font-semibold" @click="toggleCampus(campus.id)">
-                  {{ campus.name }}
+      <!-- Level 2: Dormitories -->
+      <template v-else-if="level === 'dormitories' && selectedCampus">
+        <div v-if="drilling" class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <Skeleton v-for="i in 6" :key="i" class="h-16" />
+        </div>
+        <div
+          v-else-if="selectedCampus.dormitories.length === 0"
+          class="flex flex-col items-center justify-center rounded-lg border border-dashed py-16"
+        >
+          <DoorOpen class="mb-3 size-10 text-muted-foreground" />
+          <p class="text-sm font-medium">No dormitories</p>
+          <p class="text-xs text-muted-foreground">Add dormitories to this campus first.</p>
+        </div>
+        <div v-else class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <Card
+            v-for="dorm in selectedCampus.dormitories"
+            :key="dorm.id"
+            class="cursor-pointer transition-colors hover:bg-muted/30"
+            @click="drillToDormitory(dorm.id)"
+          >
+            <CardContent class="flex items-center gap-3 p-3">
+              <div class="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
+                <DoorOpen class="size-4" />
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium leading-tight">{{ dorm.name }}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </template>
+
+      <!-- Level 3: Room selection grid -->
+      <template v-else-if="level === 'rooms' && selectedDormitory">
+        <div v-if="drilling" class="space-y-3">
+          <Skeleton class="h-8 w-full" />
+          <Skeleton class="h-8 w-full" />
+        </div>
+        <div
+          v-else-if="selectedDormitory.rooms.length === 0"
+          class="flex flex-col items-center justify-center rounded-lg border border-dashed py-16"
+        >
+          <BedDouble class="mb-3 size-10 text-muted-foreground" />
+          <p class="text-sm font-medium">No rooms</p>
+          <p class="text-xs text-muted-foreground">Add rooms to this dormitory first.</p>
+        </div>
+        <div v-else class="space-y-4">
+          <div v-for="[floor, rooms] in roomsByFloor(selectedDormitory.rooms)" :key="floor">
+            <p class="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Floor {{ floor }}
+              <span class="normal-case tracking-normal">({{ rooms[0]?.gender }}, Cap {{ rooms[0]?.capacity }})</span>
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="room in rooms"
+                :key="room.id"
+                type="button"
+                class="flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm transition-colors"
+                :class="{
+                  'bg-primary text-primary-foreground border-primary': isAssignedToCurrentFaculty(room.id),
+                  'bg-muted text-muted-foreground opacity-50 cursor-not-allowed': isAssignedToOtherFaculty(room.id),
+                  'bg-card hover:border-primary cursor-pointer': !isAssignedToCurrentFaculty(room.id) && !isAssignedToOtherFaculty(room.id) && canSelect(room.id),
+                  'bg-card opacity-40 cursor-not-allowed': !isAssignedToCurrentFaculty(room.id) && !isAssignedToOtherFaculty(room.id) && !canSelect(room.id),
+                  'opacity-40 cursor-not-allowed': isAssignedToCurrentFaculty(room.id) && !canSelect(room.id),
+                  'ring-2 ring-primary ring-offset-1': selectedRoomIds.has(room.id),
+                }"
+                :disabled="!canSelect(room.id)"
+                :title="isAssignedToOtherFaculty(room.id) ? `Assigned to ${getFacultyAbbreviationForRoom(room.id)}` : ''"
+                @click="toggleRoomSelection(room.id)"
+              >
+                <BedDouble class="size-3.5" />
+                <span class="font-mono font-medium">{{ room.number }}</span>
+                <span
+                  v-if="isAssignedToOtherFaculty(room.id)"
+                  class="text-[10px] font-semibold"
+                >
+                  {{ getFacultyAbbreviationForRoom(room.id) }}
                 </span>
-              </div>
-
-              <CollapsibleContent>
-                <Separator />
-                <div class="px-4 py-3 pl-12">
-                  <!-- Loading dormitories -->
-                  <div v-if="loadingCampuses.has(campus.id)" class="space-y-2">
-                    <Skeleton class="h-10 w-full" />
-                    <Skeleton class="h-10 w-full" />
-                  </div>
-
-                  <!-- Empty dormitories -->
-                  <p
-                    v-else-if="(campusDormitories.get(campus.id) ?? []).length === 0"
-                    class="py-2 text-sm text-muted-foreground"
-                  >
-                    No dormitories in this campus.
-                  </p>
-
-                  <!-- Dormitory list -->
-                  <div v-else class="space-y-2">
-                    <Collapsible
-                      v-for="dorm in campusDormitories.get(campus.id) ?? []"
-                      :key="dorm.id"
-                      :open="expandedDormitories.has(dorm.id)"
-                      class="rounded-md border"
-                    >
-                      <div class="flex items-center gap-3 px-3 py-2">
-                        <CollapsibleTrigger as-child>
-                          <button
-                            class="flex items-center gap-2 rounded-md p-1 hover:bg-accent"
-                            @click="toggleDormitory(dorm.id)"
-                          >
-                            <ChevronRight
-                              class="size-4 shrink-0 transition-transform duration-200"
-                              :class="{ 'rotate-90': expandedDormitories.has(dorm.id) }"
-                            />
-                            <DoorOpen class="size-4 shrink-0 text-muted-foreground" />
-                          </button>
-                        </CollapsibleTrigger>
-                        <div class="min-w-0 flex-1" @click="toggleDormitory(dorm.id)">
-                          <span class="cursor-pointer font-medium">{{ dorm.name }}</span>
-                          <Badge
-                            v-if="dormitoryAssignedCount(dorm.id)"
-                            variant="outline"
-                            class="ml-2"
-                          >
-                            {{ dormitoryAssignedCount(dorm.id) }} rooms assigned
-                          </Badge>
-                        </div>
-                      </div>
-
-                      <CollapsibleContent>
-                        <Separator />
-                        <div class="px-3 py-2 pl-10">
-                          <!-- Loading rooms -->
-                          <div v-if="loadingDormitories.has(dorm.id)" class="space-y-2">
-                            <Skeleton class="h-8 w-full" />
-                            <Skeleton class="h-8 w-full" />
-                          </div>
-
-                          <!-- Empty rooms -->
-                          <p
-                            v-else-if="(dormitoryRooms.get(dorm.id) ?? []).length === 0"
-                            class="py-2 text-sm text-muted-foreground"
-                          >
-                            No rooms in this dormitory.
-                          </p>
-
-                          <!-- Rooms grouped by floor -->
-                          <div v-else class="space-y-3">
-                            <div v-for="[floor, rooms] in roomsByFloor(dorm.id)" :key="floor">
-                              <p class="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                Floor {{ floor }}
-                                <span class="normal-case tracking-normal">({{ rooms[0]?.gender }}, Cap {{ rooms[0]?.capacity }})</span>
-                              </p>
-                              <div class="flex flex-wrap gap-2">
-                                <button
-                                  v-for="room in rooms"
-                                  :key="room.id"
-                                  type="button"
-                                  class="flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm transition-colors"
-                                  :class="{
-                                    'bg-primary text-primary-foreground border-primary': isAssignedToCurrentFaculty(room.id),
-                                    'bg-muted text-muted-foreground opacity-50 cursor-not-allowed': isAssignedToOtherFaculty(room.id),
-                                    'bg-card hover:border-primary cursor-pointer': !isAssignedToCurrentFaculty(room.id) && !isAssignedToOtherFaculty(room.id) && canSelect(room.id),
-                                    'bg-card opacity-40 cursor-not-allowed': !isAssignedToCurrentFaculty(room.id) && !isAssignedToOtherFaculty(room.id) && !canSelect(room.id),
-                                    'opacity-40 cursor-not-allowed': isAssignedToCurrentFaculty(room.id) && !canSelect(room.id),
-                                    'ring-2 ring-primary ring-offset-1': selectedRoomIds.has(room.id),
-                                  }"
-                                  :disabled="!canSelect(room.id)"
-                                  :title="isAssignedToOtherFaculty(room.id) ? `Assigned to ${getFacultyAbbreviationForRoom(room.id)}` : ''"
-                                  @click="toggleRoomSelection(room.id)"
-                                >
-                                  <BedDouble class="size-3.5" />
-                                  <span class="font-medium">{{ room.number }}</span>
-                                  <span
-                                    v-if="isAssignedToOtherFaculty(room.id)"
-                                    class="text-[10px] font-semibold"
-                                  >
-                                    {{ getFacultyAbbreviationForRoom(room.id) }}
-                                  </span>
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </div>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-
-          <!-- Actions -->
-          <div v-if="selectedRoomIds.size > 0 || actionError" class="sticky bottom-4">
-            <div class="flex items-center justify-between rounded-lg border bg-card px-4 py-3 shadow-md">
-              <span class="text-sm font-medium">
-                {{ selectedRoomIds.size }} room{{ selectedRoomIds.size !== 1 ? 's' : '' }} selected
-              </span>
-              <div class="flex items-center gap-2">
-                <p v-if="actionError" class="mr-2 text-sm text-destructive">{{ actionError }}</p>
-                <Button
-                  v-if="selectionMode === 'remove'"
-                  variant="outline"
-                  size="sm"
-                  :disabled="actionLoading"
-                  @click="handleRemove"
-                >
-                  {{ actionLoading ? 'Processing...' : 'Remove Selected' }}
-                </Button>
-                <Button
-                  v-if="selectionMode === 'assign'"
-                  size="sm"
-                  :disabled="actionLoading"
-                  @click="handleAssign"
-                >
-                  {{ actionLoading ? 'Processing...' : 'Assign Selected' }}
-                </Button>
-              </div>
+              </button>
             </div>
           </div>
-        </template>
+        </div>
       </template>
+
+      <!-- Sticky action bar -->
+      <div v-if="selectedRoomIds.size > 0" class="sticky bottom-3">
+        <div class="flex items-center justify-between rounded-lg border bg-card px-4 py-3 shadow-md">
+          <span class="text-sm font-medium">
+            {{ selectedRoomIds.size }} room{{ selectedRoomIds.size !== 1 ? 's' : '' }} selected
+          </span>
+          <div class="flex items-center gap-2">
+            <p v-if="actionError" class="mr-2 text-sm text-destructive">{{ actionError }}</p>
+            <Button
+              v-if="selectionMode === 'remove'"
+              variant="outline"
+              size="sm"
+              :disabled="actionLoading"
+              @click="handleRemove"
+            >
+              {{ actionLoading ? 'Processing...' : 'Remove Selected' }}
+            </Button>
+            <Button
+              v-if="selectionMode === 'assign'"
+              size="sm"
+              :disabled="actionLoading"
+              @click="handleAssign"
+            >
+              {{ actionLoading ? 'Processing...' : 'Assign Selected' }}
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   </AppLayout>
 </template>
