@@ -204,79 +204,85 @@ async function executeAction() {
 
 <template>
   <AppLayout>
-    <div class="space-y-6">
+    <div class="space-y-3">
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-3xl font-bold tracking-tight">Allocation Periods</h1>
-          <p class="mt-1 text-muted-foreground">
-            Configure allocation timeline per year.
-          </p>
+          <h1 class="text-lg font-semibold tracking-tight">Allocation Periods</h1>
+          <p class="text-xs text-muted-foreground">Configure allocation timeline per year.</p>
         </div>
-        <Button @click="openCreate">
-          <Plus class="mr-2 size-4" />
+        <Button size="sm" @click="openCreate">
+          <Plus class="mr-1.5 size-3.5" />
           Create Period
         </Button>
       </div>
 
       <!-- Loading skeleton -->
-      <div v-if="loading" class="space-y-3">
-        <Skeleton class="h-24 w-full" />
-        <Skeleton class="h-24 w-full" />
+      <div v-if="loading" class="space-y-2">
+        <Skeleton v-for="i in 3" :key="i" class="h-16" />
       </div>
 
       <!-- Empty state -->
       <div
         v-else-if="periods.length === 0"
-        class="flex flex-col items-center justify-center rounded-lg border border-dashed py-16"
+        class="flex flex-col items-center justify-center rounded-lg border border-dashed py-12"
       >
-        <Calendar class="mb-4 size-12 text-muted-foreground" />
-        <p class="text-lg font-medium">No allocation periods yet</p>
-        <p class="mb-4 text-sm text-muted-foreground">Create your first allocation period to get started.</p>
-        <Button @click="openCreate">
-          <Plus class="mr-2 size-4" />
+        <Calendar class="mb-3 size-10 text-muted-foreground" />
+        <p class="text-sm font-medium">No allocation periods yet</p>
+        <p class="mb-3 text-xs text-muted-foreground">Create your first allocation period to get started.</p>
+        <Button size="sm" @click="openCreate">
+          <Plus class="mr-1.5 size-3.5" />
           Create Period
         </Button>
       </div>
 
-      <!-- Period list -->
-      <div v-else class="space-y-3">
+      <!-- Period list with timeline -->
+      <div v-else class="space-y-0">
         <div
-          v-for="period in periods"
+          v-for="(period, i) in periods"
           :key="period.id"
-          class="rounded-lg border px-5 py-4"
+          class="relative flex items-center gap-3 rounded-lg border px-3 py-2.5"
+          :class="{ 'mt-2': i > 0 }"
         >
-          <div class="flex items-start justify-between">
-            <div class="space-y-1">
-              <div class="flex items-center gap-3">
-                <Calendar class="size-5 shrink-0 text-muted-foreground" />
-                <h3 class="text-lg font-semibold">{{ period.name }}</h3>
-                <Badge :variant="statusVariant(period.status)">{{ period.status }}</Badge>
-              </div>
-              <p class="pl-8 text-sm text-muted-foreground">
-                {{ formatDate(period.startDate) }} &rarr; {{ formatDate(period.endDate) }}
-              </p>
+          <!-- Status dot -->
+          <div
+            class="size-2.5 shrink-0 rounded-full"
+            :class="{
+              'bg-emerald-500': period.status === 'Open',
+              'bg-amber-500': period.status === 'Draft',
+              'bg-muted-foreground/30': period.status === 'Closed',
+            }"
+          />
+          <!-- Content -->
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium">{{ period.name }}</span>
+              <Badge :variant="statusVariant(period.status)" class="h-4 px-1.5 text-[9px]">{{ period.status }}</Badge>
             </div>
-            <div class="flex items-center gap-1">
-              <template v-if="period.status === 'Draft'">
-                <Button variant="outline" size="sm" @click="confirmAction('activate', period)">
-                  <Play class="mr-1 size-4" />
-                  Activate
-                </Button>
-                <Button variant="ghost" size="icon" class="size-8" @click="openEdit(period)">
-                  <Pencil class="size-4" />
-                </Button>
-                <Button variant="ghost" size="icon" class="size-8" @click="confirmDelete(period)">
-                  <Trash2 class="size-4" />
-                </Button>
-              </template>
-              <template v-else-if="period.status === 'Open'">
-                <Button variant="outline" size="sm" @click="confirmAction('close', period)">
-                  <Square class="mr-1 size-4" />
-                  Close
-                </Button>
-              </template>
-            </div>
+            <p class="font-mono text-[11px] text-muted-foreground">
+              {{ formatDate(period.startDate) }} — {{ formatDate(period.endDate) }}
+            </p>
+          </div>
+          <!-- Actions -->
+          <div class="flex items-center gap-1">
+            <template v-if="period.status === 'Draft'">
+              <Button variant="outline" size="sm" class="h-7 text-xs" @click="confirmAction('activate', period)">
+                <Play class="mr-1 size-3" />
+                Activate
+              </Button>
+              <Button variant="ghost" size="icon" class="size-7" @click="openEdit(period)">
+                <Pencil class="size-3.5" />
+              </Button>
+              <Button variant="ghost" size="icon" class="size-7" @click="confirmDelete(period)">
+                <Trash2 class="size-3.5" />
+              </Button>
+            </template>
+            <template v-else-if="period.status === 'Open'">
+              <Button variant="outline" size="sm" class="h-7 text-xs" @click="confirmAction('close', period)">
+                <Square class="mr-1 size-3" />
+                Close
+              </Button>
+            </template>
           </div>
         </div>
       </div>
