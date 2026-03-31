@@ -41,7 +41,6 @@ export async function apiClient<T>(
 export async function apiUpload<T>(
   path: string,
   file: File,
-  method = 'POST',
 ): Promise<T> {
   const formData = new FormData()
   formData.append('file', file)
@@ -53,7 +52,7 @@ export async function apiUpload<T>(
   }
 
   const response = await fetch(`${API_BASE}${path}`, {
-    method,
+    method: 'POST',
     headers,
     body: formData,
   })
