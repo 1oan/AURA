@@ -1,5 +1,6 @@
 using Aura.Application.Users.Commands.ChangePassword;
 using Aura.Application.Users.Commands.PromoteUser;
+using Aura.Application.Users.Commands.SetMatriculationCode;
 using Aura.Application.Users.Commands.UpdateProfile;
 using Aura.Application.Users.Queries.GetCurrentUser;
 using MediatR;
@@ -36,6 +37,13 @@ public class UsersController : ControllerBase
 
     [HttpPut("me/password")]
     public async Task<IActionResult> ChangePassword(ChangePasswordCommand command)
+    {
+        await _sender.Send(command);
+        return NoContent();
+    }
+
+    [HttpPatch("me/matriculation-code")]
+    public async Task<IActionResult> SetMatriculationCode(SetMatriculationCodeCommand command)
     {
         await _sender.Send(command);
         return NoContent();

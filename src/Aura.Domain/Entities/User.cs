@@ -13,6 +13,7 @@ public class User
     public UserRole Role { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? LastLoginAt { get; private set; }
+    public string? MatriculationCode { get; private set; }
     public Guid? FacultyId { get; private set; }
     public Faculty? Faculty { get; private set; }
 
@@ -96,5 +97,15 @@ public class User
     public void RemoveFromFaculty()
     {
         FacultyId = null;
+    }
+
+    public void SetMatriculationCode(string code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+            throw new DomainException("Matriculation code is required.");
+        if (code.Length > 50)
+            throw new DomainException("Matriculation code must not exceed 50 characters.");
+
+        MatriculationCode = code.Trim();
     }
 }

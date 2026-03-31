@@ -29,6 +29,7 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, U
             user.FirstName,
             user.LastName,
             user.Role.ToString(),
-            user.CreatedAt);
+            user.CreatedAt,
+            user.MatriculationCode);
     }
 }

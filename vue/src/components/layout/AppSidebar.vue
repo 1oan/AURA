@@ -57,17 +57,17 @@ const mainNav: NavItem[] = [
 ]
 
 const managementNav: NavItem[] = [
-  { title: 'Campuses', url: '/campuses', icon: Building2 },
-  { title: 'Faculties', url: '/faculties', icon: GraduationCap },
-  { title: 'Room Quotas', url: '/room-quotas', icon: Grid3X3 },
-  { title: 'Allocation Period', url: '/allocation', icon: CalendarClock },
+  { title: 'Campuses', url: '/campuses', icon: Building2, roles: ['SuperAdmin', 'FacultyAdmin'] },
+  { title: 'Faculties', url: '/faculties', icon: GraduationCap, roles: ['SuperAdmin'] },
+  { title: 'Room Quotas', url: '/room-quotas', icon: Grid3X3, roles: ['SuperAdmin', 'FacultyAdmin'] },
+  { title: 'Allocation Period', url: '/allocation', icon: CalendarClock, roles: ['SuperAdmin', 'FacultyAdmin'] },
 ]
 
 const allocationNav: NavItem[] = [
   { title: 'Students', url: '/students', icon: Users, roles: ['SuperAdmin', 'FacultyAdmin'] },
-  { title: 'Preferences', url: '/preferences', icon: ListOrdered },
+  { title: 'Preferences', url: '/preferences', icon: ListOrdered, roles: ['SuperAdmin', 'FacultyAdmin'] },
   { title: 'Room Assignment', url: '/room-assignment', icon: DoorOpen, roles: ['SuperAdmin', 'FacultyAdmin'] },
-  { title: 'Confirmations', url: '/confirmations', icon: CheckCircle2 },
+  { title: 'Confirmations', url: '/confirmations', icon: CheckCircle2, roles: ['SuperAdmin', 'FacultyAdmin'] },
 ]
 
 const isAdmin = computed(() => ['SuperAdmin', 'FacultyAdmin'].includes(userRole.value))
@@ -123,7 +123,7 @@ function isActive(url: string) {
         </SidebarGroupContent>
       </SidebarGroup>
 
-      <SidebarGroup v-if="isAdmin">
+      <SidebarGroup v-if="visibleItems(managementNav).length > 0">
         <SidebarGroupLabel class="px-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
           Management
         </SidebarGroupLabel>

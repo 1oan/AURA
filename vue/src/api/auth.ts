@@ -15,6 +15,7 @@ export interface UserDto {
   firstName: string
   lastName: string
   role: string
+  matriculationCode: string | null
   createdAt: string
 }
 
@@ -46,4 +47,11 @@ export function login(data: LoginRequest): Promise<AuthResult> {
 
 export function getCurrentUser(): Promise<UserDto> {
   return apiClient<UserDto>('/users/me')
+}
+
+export function setMatriculationCode(matriculationCode: string): Promise<void> {
+  return apiClient<void>('/users/me/matriculation-code', {
+    method: 'PATCH',
+    body: { matriculationCode },
+  })
 }
