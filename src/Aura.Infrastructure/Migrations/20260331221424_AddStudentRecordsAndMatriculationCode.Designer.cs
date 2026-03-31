@@ -3,6 +3,7 @@ using System;
 using Aura.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Aura.Infrastructure.Migrations
 {
     [DbContext(typeof(AuraDbContext))]
-    partial class AuraDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260331221424_AddStudentRecordsAndMatriculationCode")]
+    partial class AddStudentRecordsAndMatriculationCode
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

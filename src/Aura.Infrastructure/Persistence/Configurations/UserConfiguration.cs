@@ -36,6 +36,13 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.CreatedAt)
             .IsRequired();
 
+        builder.Property(u => u.MatriculationCode)
+            .HasMaxLength(50);
+
+        builder.HasIndex(u => u.MatriculationCode)
+            .IsUnique()
+            .HasFilter("\"MatriculationCode\" IS NOT NULL");
+
         builder.Property(u => u.FacultyId);
         builder.HasOne(u => u.Faculty)
             .WithMany()

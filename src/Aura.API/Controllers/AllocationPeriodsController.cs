@@ -14,18 +14,21 @@ namespace Aura.API.Controllers;
 
 [ApiController]
 [Route("api/allocation-periods")]
-[Authorize(Roles = "SuperAdmin")]
+[Authorize]
 public class AllocationPeriodsController(ISender sender) : ControllerBase
 {
     [HttpGet]
+    [Authorize(Roles = "SuperAdmin,FacultyAdmin")]
     public async Task<IActionResult> GetAll()
         => Ok(await sender.Send(new GetAllocationPeriodsQuery()));
 
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = "SuperAdmin,FacultyAdmin")]
     public async Task<IActionResult> GetById(Guid id)
         => Ok(await sender.Send(new GetAllocationPeriodByIdQuery(id)));
 
     [HttpPost]
+    [Authorize(Roles = "SuperAdmin")]
     public async Task<IActionResult> Create(CreateAllocationPeriodCommand command)
     {
         var result = await sender.Send(command);
@@ -33,6 +36,7 @@ public class AllocationPeriodsController(ISender sender) : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "SuperAdmin")]
     public async Task<IActionResult> Update(Guid id, UpdateAllocationPeriodCommand command)
     {
         await sender.Send(command with { Id = id });
@@ -40,6 +44,7 @@ public class AllocationPeriodsController(ISender sender) : ControllerBase
     }
 
     [HttpPost("{id:guid}/activate")]
+    [Authorize(Roles = "SuperAdmin")]
     public async Task<IActionResult> Activate(Guid id)
     {
         await sender.Send(new ActivateAllocationPeriodCommand(id));
@@ -47,6 +52,7 @@ public class AllocationPeriodsController(ISender sender) : ControllerBase
     }
 
     [HttpPost("{id:guid}/start-allocating")]
+    [Authorize(Roles = "SuperAdmin")]
     public async Task<IActionResult> StartAllocating(Guid id)
     {
         await sender.Send(new StartAllocatingCommand(id));
@@ -54,6 +60,7 @@ public class AllocationPeriodsController(ISender sender) : ControllerBase
     }
 
     [HttpPost("{id:guid}/close")]
+    [Authorize(Roles = "SuperAdmin")]
     public async Task<IActionResult> Close(Guid id)
     {
         await sender.Send(new CloseAllocationPeriodCommand(id));
@@ -61,6 +68,7 @@ public class AllocationPeriodsController(ISender sender) : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "SuperAdmin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await sender.Send(new DeleteAllocationPeriodCommand(id));

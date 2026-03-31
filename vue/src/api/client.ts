@@ -38,6 +38,33 @@ export async function apiClient<T>(
   return response.json()
 }
 
+export async function apiUpload<T>(
+  path: string,
+  file: File,
+): Promise<T> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const headers: Record<string, string> = {}
+  const token = localStorage.getItem('auth_token')
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'An unexpected error occurred.' }))
+    throw new ApiError(response.status, error)
+  }
+
+  return response.json()
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,

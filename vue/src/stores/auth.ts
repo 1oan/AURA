@@ -20,6 +20,7 @@ export const useAuthStore = defineStore('auth', () => {
       firstName: result.firstName,
       lastName: result.lastName,
       role: result.role,
+      matriculationCode: null,
       createdAt: new Date().toISOString(),
     }
   }
