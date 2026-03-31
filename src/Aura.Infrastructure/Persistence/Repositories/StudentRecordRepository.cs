@@ -25,6 +25,7 @@ public class StudentRecordRepository(AuraDbContext context) : IStudentRecordRepo
         string code, Guid allocationPeriodId, CancellationToken ct = default)
     {
         return await context.StudentRecords
+            .Include(sr => sr.Faculty)
             .FirstOrDefaultAsync(sr => sr.MatriculationCode == code
                 && sr.AllocationPeriodId == allocationPeriodId, ct);
     }

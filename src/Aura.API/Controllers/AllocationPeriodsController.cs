@@ -18,12 +18,10 @@ namespace Aura.API.Controllers;
 public class AllocationPeriodsController(ISender sender) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin")]
     public async Task<IActionResult> GetAll()
         => Ok(await sender.Send(new GetAllocationPeriodsQuery()));
 
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin")]
     public async Task<IActionResult> GetById(Guid id)
         => Ok(await sender.Send(new GetAllocationPeriodByIdQuery(id)));
 

@@ -32,3 +32,33 @@ export function getStudentRecords(allocationPeriodId: string, facultyId?: string
   if (facultyId) params.set('facultyId', facultyId)
   return apiClient<StudentRecordDto[]>(`/student-records?${params}`)
 }
+
+export interface ParticipateRequest {
+  matriculationCode?: string
+}
+
+export interface ParticipateResult {
+  facultyName: string
+  facultyAbbreviation: string
+  points: number
+}
+
+export interface MyEligibilityResult {
+  isEligible: boolean
+  hasParticipated: boolean
+  facultyName: string | null
+  facultyAbbreviation: string | null
+  points: number | null
+  matriculationCode: string | null
+}
+
+export function participate(allocationPeriodId: string, data?: ParticipateRequest): Promise<ParticipateResult> {
+  return apiClient<ParticipateResult>(`/student-records/participate/${allocationPeriodId}`, {
+    method: 'POST',
+    body: data ?? {},
+  })
+}
+
+export function getMyEligibility(allocationPeriodId: string): Promise<MyEligibilityResult> {
+  return apiClient<MyEligibilityResult>(`/student-records/my-eligibility/${allocationPeriodId}`)
+}
