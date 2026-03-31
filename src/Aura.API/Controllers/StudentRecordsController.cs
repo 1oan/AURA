@@ -1,4 +1,6 @@
+using Aura.Application.StudentRecords.Commands.Participate;
 using Aura.Application.StudentRecords.Commands.UploadCsv;
+using Aura.Application.StudentRecords.Queries.GetMyEligibility;
 using Aura.Application.StudentRecords.Queries.GetStudentRecords;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -27,5 +29,20 @@ public class StudentRecordsController(ISender sender) : ControllerBase
         [FromQuery] Guid? facultyId)
     {
         return Ok(await sender.Send(new GetStudentRecordsQuery(allocationPeriodId, facultyId)));
+    }
+
+    [HttpPost("participate/{allocationPeriodId:guid}")]
+    [Authorize]
+    public async Task<IActionResult> Participate(Guid allocationPeriodId, ParticipateCommand command)
+    {
+        var result = await sender.Send(command with { AllocationPeriodId = allocationPeriodId });
+        return Ok(result);
+    }
+
+    [HttpGet("my-eligibility/{allocationPeriodId:guid}")]
+    [Authorize]
+    public async Task<IActionResult> GetMyEligibility(Guid allocationPeriodId)
+    {
+        return Ok(await sender.Send(new GetMyEligibilityQuery(allocationPeriodId)));
     }
 }

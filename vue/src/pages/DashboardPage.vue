@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { toast } from 'vue-sonner'
 import {
   Building2,
   DoorOpen,
@@ -7,17 +8,24 @@ import {
   CalendarClock,
   ArrowRight,
   Circle,
+  CheckCircle2,
+  GraduationCap,
 } from 'lucide-vue-next'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuthStore } from '@/stores/auth'
 import { getDashboardStats } from '@/api/dashboard'
 import type { DashboardStatsDto } from '@/api/dashboard'
 import { getAllocationPeriods } from '@/api/allocationPeriods'
 import type { AllocationPeriodDto } from '@/api/allocationPeriods'
+import { getMyEligibility, participate } from '@/api/studentRecords'
+import type { MyEligibilityResult, ParticipateResult } from '@/api/studentRecords'
+import { ApiError } from '@/api/client'
 
 const authStore = useAuthStore()
 const isAdmin = computed(() => ['SuperAdmin', 'FacultyAdmin'].includes(authStore.user?.role ?? ''))
@@ -31,22 +39,65 @@ const maxFacultyRooms = computed(() => {
   return Math.max(...stats.value.allocationsByFaculty.map(a => a.roomCount))
 })
 
+// --- Student participation state ---
+const eligibility = ref<MyEligibilityResult | null>(null)
+const participateResult = ref<ParticipateResult | null>(null)
+const matricInput = ref('')
+const participating = ref(false)
+const participateError = ref('')
+const activePeriodForStudent = ref<AllocationPeriodDto | null>(null)
+
 async function loadDashboard() {
-  if (!isAdmin.value) {
-    loading.value = false
+  if (isAdmin.value) {
+    try {
+      const [dashStats, allPeriods] = await Promise.all([
+        getDashboardStats(),
+        getAllocationPeriods(),
+      ])
+      stats.value = dashStats
+      periods.value = allPeriods
+    } catch {
+      // silent
+    } finally {
+      loading.value = false
+    }
+  } else {
+    try {
+      const allPeriods = await getAllocationPeriods().catch(() => [] as AllocationPeriodDto[])
+      const openPeriod = allPeriods.find(p => p.status === 'Open' || p.status === 'Allocating')
+      activePeriodForStudent.value = openPeriod ?? null
+      if (openPeriod && authStore.user?.matriculationCode) {
+        eligibility.value = await getMyEligibility(openPeriod.id)
+      }
+    } catch {
+      // silent
+    } finally {
+      loading.value = false
+    }
+  }
+}
+
+async function handleParticipate() {
+  if (!activePeriodForStudent.value) return
+  const code = matricInput.value.trim() || undefined
+  if (!code && !authStore.user?.matriculationCode) {
+    participateError.value = 'Please enter your matriculation code.'
     return
   }
+  participating.value = true
+  participateError.value = ''
   try {
-    const [dashStats, allPeriods] = await Promise.all([
-      getDashboardStats(),
-      getAllocationPeriods(),
-    ])
-    stats.value = dashStats
-    periods.value = allPeriods
-  } catch {
-    // silent — dashboard is informational
+    participateResult.value = await participate(activePeriodForStudent.value.id, { matriculationCode: code })
+    await authStore.fetchCurrentUser()
+    eligibility.value = await getMyEligibility(activePeriodForStudent.value.id)
+    toast.success('You have successfully participated!')
+  } catch (e) {
+    if (e instanceof ApiError) {
+      const data = e.data as { detail?: string }
+      participateError.value = data.detail ?? 'Failed to participate.'
+    }
   } finally {
-    loading.value = false
+    participating.value = false
   }
 }
 
@@ -243,15 +294,93 @@ function formatDate(dateStr: string) {
         </div>
       </template>
 
-      <!-- Non-admin view -->
+      <!-- Student view -->
       <template v-else>
-        <Card>
+        <!-- No active period -->
+        <Card v-if="!activePeriodForStudent">
           <CardContent class="flex flex-col items-center justify-center py-12">
             <CalendarClock class="mb-3 size-10 text-muted-foreground" />
-            <p class="text-sm font-medium">Welcome to AURA</p>
-            <p class="text-xs text-muted-foreground">Check back when an allocation period is open to submit your preferences.</p>
+            <p class="text-sm font-medium">No active allocation period</p>
+            <p class="text-xs text-muted-foreground">Check back when a period is open for participation.</p>
           </CardContent>
         </Card>
+
+        <!-- Already participated -->
+        <template v-else-if="eligibility?.hasParticipated">
+          <Card class="border-emerald-500/30 bg-emerald-500/5">
+            <CardContent class="p-4">
+              <div class="flex items-center gap-3">
+                <CheckCircle2 class="size-5 text-emerald-600" />
+                <div>
+                  <p class="text-sm font-medium">You are participating in {{ activePeriodForStudent.name }}</p>
+                  <p class="text-xs text-muted-foreground">Your allocation will be processed when the period enters the allocating phase.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent class="p-4">
+              <div class="grid gap-3 sm:grid-cols-3">
+                <div class="space-y-1">
+                  <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Faculty</p>
+                  <div class="flex items-center gap-2">
+                    <GraduationCap class="size-4 text-primary" />
+                    <span class="text-sm font-medium">{{ eligibility.facultyName }}</span>
+                    <Badge variant="outline" class="font-mono text-[10px]">{{ eligibility.facultyAbbreviation }}</Badge>
+                  </div>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Points</p>
+                  <p class="text-xl font-semibold font-mono tabular-nums">{{ eligibility.points }}</p>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Matriculation Code</p>
+                  <p class="text-sm font-mono">{{ eligibility.matriculationCode }}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </template>
+
+        <!-- Can participate -->
+        <template v-else>
+          <Card>
+            <CardContent class="p-4">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="flex size-2.5 rounded-full bg-emerald-500" />
+                <div>
+                  <p class="text-sm font-medium">{{ activePeriodForStudent.name }} is open</p>
+                  <p class="text-xs text-muted-foreground">Participate to be included in the dormitory allocation.</p>
+                </div>
+              </div>
+
+              <!-- Matriculation code input (if not set) -->
+              <div v-if="!authStore.user?.matriculationCode" class="mb-4 space-y-2">
+                <Label for="matric-participate" class="text-xs">Enter your matriculation code to participate</Label>
+                <div class="flex gap-2">
+                  <Input
+                    id="matric-participate"
+                    v-model="matricInput"
+                    placeholder="e.g. CS2024001"
+                    class="w-48 font-mono"
+                    @keydown.enter="handleParticipate"
+                  />
+                </div>
+              </div>
+
+              <!-- Already has code -->
+              <p v-else class="mb-4 text-xs text-muted-foreground">
+                Using matriculation code: <span class="font-mono font-medium text-foreground">{{ authStore.user.matriculationCode }}</span>
+              </p>
+
+              <p v-if="participateError" role="alert" class="mb-3 text-xs text-destructive">{{ participateError }}</p>
+
+              <Button :disabled="participating" @click="handleParticipate">
+                {{ participating ? 'Participating...' : 'Participate' }}
+              </Button>
+            </CardContent>
+          </Card>
+        </template>
       </template>
     </div>
   </AppLayout>
