@@ -26,6 +26,7 @@ public static class DependencyInjection
                 npgsql.EnableRetryOnFailure(maxRetryCount: 3);
             }));
 
+        services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<AuraDbContext>());
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICampusRepository, CampusRepository>();
         services.AddScoped<IDormitoryRepository, DormitoryRepository>();

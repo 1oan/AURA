@@ -143,61 +143,57 @@ async function executeDelete() {
 
 <template>
   <AppLayout>
-    <div class="space-y-6">
+    <div class="space-y-3">
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-3xl font-bold tracking-tight">Faculties</h1>
-          <p class="mt-1 text-muted-foreground">
-            Manage faculties and assign admins.
-          </p>
+          <h1 class="text-lg font-semibold tracking-tight">Faculties</h1>
+          <p class="text-xs text-muted-foreground">Manage faculties and assign admins.</p>
         </div>
-        <Button @click="openCreate">
-          <Plus class="mr-2 size-4" />
+        <Button size="sm" @click="openCreate">
+          <Plus class="mr-1.5 size-3.5" />
           Add Faculty
         </Button>
       </div>
 
       <!-- Loading skeleton -->
-      <div v-if="loading" class="space-y-3">
-        <Skeleton class="h-14 w-full" />
-        <Skeleton class="h-14 w-full" />
-        <Skeleton class="h-14 w-full" />
+      <div v-if="loading" class="space-y-1">
+        <Skeleton v-for="i in 5" :key="i" class="h-9" />
       </div>
 
       <!-- Empty state -->
       <div
         v-else-if="faculties.length === 0"
-        class="flex flex-col items-center justify-center rounded-lg border border-dashed py-16"
+        class="flex flex-col items-center justify-center rounded-lg border border-dashed py-12"
       >
-        <GraduationCap class="mb-4 size-12 text-muted-foreground" />
-        <p class="text-lg font-medium">No faculties yet</p>
-        <p class="mb-4 text-sm text-muted-foreground">Get started by adding your first faculty.</p>
-        <Button @click="openCreate">
-          <Plus class="mr-2 size-4" />
+        <GraduationCap class="mb-3 size-10 text-muted-foreground" />
+        <p class="text-sm font-medium">No faculties yet</p>
+        <p class="mb-3 text-xs text-muted-foreground">Get started by adding your first faculty.</p>
+        <Button size="sm" @click="openCreate">
+          <Plus class="mr-1.5 size-3.5" />
           Add Faculty
         </Button>
       </div>
 
-      <!-- Faculty list -->
+      <!-- Faculty table -->
       <div v-else class="rounded-lg border">
         <div
           v-for="(faculty, index) in faculties"
           :key="faculty.id"
-          class="flex items-center justify-between px-4 py-3"
+          class="group flex items-center justify-between px-3 py-2 transition-colors hover:bg-muted/50"
           :class="{ 'border-t': index > 0 }"
         >
           <div class="flex items-center gap-3">
-            <GraduationCap class="size-5 shrink-0 text-muted-foreground" />
-            <span class="font-medium">{{ faculty.name }}</span>
-            <Badge variant="outline">{{ faculty.abbreviation }}</Badge>
+            <GraduationCap class="size-4 shrink-0 text-muted-foreground" />
+            <span class="text-sm font-medium">{{ faculty.name }}</span>
+            <Badge variant="outline" class="font-mono text-[10px]">{{ faculty.abbreviation }}</Badge>
           </div>
-          <div class="flex items-center gap-1">
-            <Button variant="ghost" size="icon" class="size-8" @click="openEdit(faculty)">
-              <Pencil class="size-4" />
+          <div class="flex items-center gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+            <Button variant="ghost" size="icon" class="size-7" @click="openEdit(faculty)">
+              <Pencil class="size-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" class="size-8" @click="confirmDelete(faculty)">
-              <Trash2 class="size-4" />
+            <Button variant="ghost" size="icon" class="size-7" @click="confirmDelete(faculty)">
+              <Trash2 class="size-3.5" />
             </Button>
           </div>
         </div>
@@ -222,7 +218,7 @@ async function executeDelete() {
             <Label for="faculty-abbreviation">Abbreviation</Label>
             <Input id="faculty-abbreviation" v-model="form.abbreviation" placeholder="e.g. CS" required />
           </div>
-          <p v-if="formError" class="text-sm text-destructive">{{ formError }}</p>
+          <p v-if="formError" role="alert" class="text-sm text-destructive">{{ formError }}</p>
           <DialogFooter>
             <Button type="submit" :disabled="formSaving">
               {{ formSaving ? 'Saving...' : 'Save' }}
@@ -243,7 +239,7 @@ async function executeDelete() {
             This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <p v-if="deleteError" class="text-sm text-destructive">{{ deleteError }}</p>
+        <p v-if="deleteError" role="alert" class="text-sm text-destructive">{{ deleteError }}</p>
         <AlertDialogFooter>
           <AlertDialogCancel :disabled="deleteLoading">Cancel</AlertDialogCancel>
           <Button

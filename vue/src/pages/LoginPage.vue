@@ -46,7 +46,7 @@ async function handleSubmit() {
       </div>
 
       <form class="space-y-4" @submit.prevent="handleSubmit">
-        <div v-if="error" class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+        <div v-if="error" role="alert" class="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
           {{ error }}
         </div>
 

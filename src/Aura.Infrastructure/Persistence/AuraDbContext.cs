@@ -1,9 +1,10 @@
+using Aura.Application.Common.Interfaces;
 using Aura.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aura.Infrastructure.Persistence;
 
-public sealed class AuraDbContext : DbContext
+public sealed class AuraDbContext : DbContext, IApplicationDbContext
 {
     public AuraDbContext(DbContextOptions<AuraDbContext> options) : base(options) { }
 
