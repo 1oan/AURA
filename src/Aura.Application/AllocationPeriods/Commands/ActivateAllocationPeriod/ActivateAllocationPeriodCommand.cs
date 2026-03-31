@@ -20,8 +20,8 @@ public class ActivateAllocationPeriodCommandHandler : IRequestHandler<ActivateAl
         var period = await _allocationPeriodRepository.FindByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException($"Allocation period with id '{request.Id}' was not found.");
 
-        if (await _allocationPeriodRepository.AnyOpenAsync(cancellationToken))
-            throw new DomainException("Only one allocation period can be open at a time.");
+        if (await _allocationPeriodRepository.AnyActiveAsync(cancellationToken))
+            throw new DomainException("Only one allocation period can be active at a time.");
 
         period.Activate();
 

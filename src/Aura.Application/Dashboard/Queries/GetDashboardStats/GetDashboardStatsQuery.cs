@@ -22,7 +22,7 @@ public class GetDashboardStatsQueryHandler(IApplicationDbContext dbContext)
             .FirstOrDefaultAsync(cancellationToken);
         var facultyCount = await dbContext.Faculties.CountAsync(cancellationToken);
         var activePeriod = await dbContext.AllocationPeriods
-            .FirstOrDefaultAsync(p => p.Status == AllocationPeriodStatus.Open, cancellationToken);
+            .FirstOrDefaultAsync(p => p.Status == AllocationPeriodStatus.Open || p.Status == AllocationPeriodStatus.Allocating, cancellationToken);
 
         ActivePeriodDto? activePeriodDto = activePeriod is not null
             ? new ActivePeriodDto(

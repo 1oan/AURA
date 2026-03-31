@@ -4,5 +4,6 @@ public enum AllocationPeriodStatus
 {
     Draft = 0,
     Open = 1,
-    Closed = 2
+    Allocating = 2,
+    Closed = 3
 }

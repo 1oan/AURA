@@ -55,10 +55,17 @@ public class AllocationPeriod
         Status = AllocationPeriodStatus.Open;
     }
 
-    public void Close()
+    public void StartAllocating()
     {
         if (Status != AllocationPeriodStatus.Open)
-            throw new DomainException("Can only close an Open allocation period.");
+            throw new DomainException("Can only start allocating an Open allocation period.");
+        Status = AllocationPeriodStatus.Allocating;
+    }
+
+    public void Close()
+    {
+        if (Status != AllocationPeriodStatus.Allocating)
+            throw new DomainException("Can only close an Allocating allocation period.");
         Status = AllocationPeriodStatus.Closed;
     }
 }
