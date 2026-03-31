@@ -1,5 +1,6 @@
 using Aura.Application.AllocationPeriods.Commands.ActivateAllocationPeriod;
 using Aura.Application.AllocationPeriods.Commands.CloseAllocationPeriod;
+using Aura.Application.AllocationPeriods.Commands.StartAllocating;
 using Aura.Application.AllocationPeriods.Commands.CreateAllocationPeriod;
 using Aura.Application.AllocationPeriods.Commands.DeleteAllocationPeriod;
 using Aura.Application.AllocationPeriods.Commands.UpdateAllocationPeriod;
@@ -42,6 +43,13 @@ public class AllocationPeriodsController(ISender sender) : ControllerBase
     public async Task<IActionResult> Activate(Guid id)
     {
         await sender.Send(new ActivateAllocationPeriodCommand(id));
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/start-allocating")]
+    public async Task<IActionResult> StartAllocating(Guid id)
+    {
+        await sender.Send(new StartAllocatingCommand(id));
         return NoContent();
     }
 

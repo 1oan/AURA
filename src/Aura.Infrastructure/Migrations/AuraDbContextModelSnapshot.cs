@@ -50,7 +50,7 @@ namespace Aura.Infrastructure.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("AllocationPeriods");
+                    b.ToTable("AllocationPeriods", (string)null);
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Campus", b =>
@@ -70,7 +70,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Campuses");
+                    b.ToTable("Campuses", (string)null);
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Dormitory", b =>
@@ -91,7 +91,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasIndex("CampusId");
 
-                    b.ToTable("Dormitories");
+                    b.ToTable("Dormitories", (string)null);
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Faculty", b =>
@@ -118,7 +118,7 @@ namespace Aura.Infrastructure.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Faculties");
+                    b.ToTable("Faculties", (string)null);
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.FacultyRoomAllocation", b =>
@@ -145,7 +145,7 @@ namespace Aura.Infrastructure.Migrations
                     b.HasIndex("RoomId", "AllocationPeriodId")
                         .IsUnique();
 
-                    b.ToTable("FacultyRoomAllocations");
+                    b.ToTable("FacultyRoomAllocations", (string)null);
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Room", b =>
@@ -176,7 +176,7 @@ namespace Aura.Infrastructure.Migrations
                     b.HasIndex("DormitoryId", "Number")
                         .IsUnique();
 
-                    b.ToTable("Rooms");
+                    b.ToTable("Rooms", (string)null);
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.User", b =>
@@ -224,7 +224,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasIndex("FacultyId");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Dormitory", b =>

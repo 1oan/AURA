@@ -24,13 +24,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Plus, Pencil, Trash2, Calendar, Play, Square } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2, Calendar, Play, Square, Loader } from 'lucide-vue-next'
 import { ApiError } from '@/api/client'
 import {
   getAllocationPeriods,
   createAllocationPeriod,
   updateAllocationPeriod,
   activateAllocationPeriod,
+  startAllocating,
   closeAllocationPeriod,
   deleteAllocationPeriod,
 } from '@/api/allocationPeriods'
@@ -55,7 +56,7 @@ const deleteLoading = ref(false)
 
 // --- Activate / Close ---
 const actionDialogOpen = ref(false)
-const actionType = ref<'activate' | 'close'>('activate')
+const actionType = ref<'activate' | 'startAllocating' | 'close'>('activate')
 const actionTarget = ref<{ id: string; name: string }>({ id: '', name: '' })
 const actionError = ref('')
 const actionLoading = ref(false)
@@ -67,6 +68,7 @@ function formatDate(dateStr: string): string {
 
 function statusVariant(status: string) {
   if (status === 'Open') return 'default' as const
+  if (status === 'Allocating') return 'default' as const
   if (status === 'Closed') return 'secondary' as const
   return 'outline' as const
 }
@@ -171,12 +173,18 @@ async function executeDelete() {
 }
 
 // --- Activate / Close ---
-function confirmAction(type: 'activate' | 'close', period: AllocationPeriodDto) {
+function confirmAction(type: 'activate' | 'startAllocating' | 'close', period: AllocationPeriodDto) {
   actionType.value = type
   actionTarget.value = { id: period.id, name: period.name }
   actionError.value = ''
   actionDialogOpen.value = true
 }
+
+const actionLabels = {
+  activate: 'Open for Students',
+  startAllocating: 'Start Allocating',
+  close: 'Close Period',
+} as const
 
 async function executeAction() {
   actionError.value = ''
@@ -184,13 +192,19 @@ async function executeAction() {
   try {
     if (actionType.value === 'activate') {
       await activateAllocationPeriod(actionTarget.value.id)
+    } else if (actionType.value === 'startAllocating') {
+      await startAllocating(actionTarget.value.id)
     } else {
       await closeAllocationPeriod(actionTarget.value.id)
     }
-    // Refetch to get updated statuses
     periods.value = await getAllocationPeriods()
     actionDialogOpen.value = false
-    toast.success(actionType.value === 'activate' ? 'Period activated.' : 'Period closed.')
+    const toastMessages = {
+      activate: 'Period opened for students.',
+      startAllocating: 'Allocation started.',
+      close: 'Period closed.',
+    } as const
+    toast.success(toastMessages[actionType.value])
   } catch (e) {
     if (e instanceof ApiError) {
       const data = e.data as { detail?: string }
@@ -249,6 +263,7 @@ async function executeAction() {
             class="size-2.5 shrink-0 rounded-full"
             :class="{
               'bg-emerald-500': period.status === 'Open',
+              'bg-blue-500': period.status === 'Allocating',
               'bg-amber-500': period.status === 'Draft',
               'bg-muted-foreground/30': period.status === 'Closed',
             }"
@@ -268,7 +283,7 @@ async function executeAction() {
             <template v-if="period.status === 'Draft'">
               <Button variant="outline" size="sm" class="h-7 text-xs" @click="confirmAction('activate', period)">
                 <Play class="mr-1 size-3" />
-                Activate
+                Open for Students
               </Button>
               <Button variant="ghost" size="icon" class="size-7" @click="openEdit(period)">
                 <Pencil class="size-3.5" />
@@ -278,9 +293,15 @@ async function executeAction() {
               </Button>
             </template>
             <template v-else-if="period.status === 'Open'">
+              <Button variant="outline" size="sm" class="h-7 text-xs" @click="confirmAction('startAllocating', period)">
+                <Loader class="mr-1 size-3" />
+                Start Allocating
+              </Button>
+            </template>
+            <template v-else-if="period.status === 'Allocating'">
               <Button variant="outline" size="sm" class="h-7 text-xs" @click="confirmAction('close', period)">
                 <Square class="mr-1 size-3" />
-                Close
+                Close Period
               </Button>
             </template>
           </div>
@@ -351,16 +372,21 @@ async function executeAction() {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {{ actionType === 'activate' ? 'Activate Period?' : 'Close Period?' }}
+            {{ actionLabels[actionType] }}?
           </AlertDialogTitle>
           <AlertDialogDescription>
             <template v-if="actionType === 'activate'">
-              This will open <strong>{{ actionTarget.name }}</strong> for allocation.
-              Only one period can be open at a time.
+              This will open <strong>{{ actionTarget.name }}</strong> for student participation.
+              Make sure all faculties have uploaded their CSVs and room quotas are assigned.
+              Only one period can be active at a time.
+            </template>
+            <template v-else-if="actionType === 'startAllocating'">
+              This will start the allocation process for <strong>{{ actionTarget.name }}</strong>.
+              Students will no longer be able to change their preferences.
             </template>
             <template v-else>
               This will close <strong>{{ actionTarget.name }}</strong>.
-              This action cannot be undone.
+              This is typically done at the end of the academic year.
             </template>
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -371,7 +397,7 @@ async function executeAction() {
             :disabled="actionLoading"
             @click="executeAction"
           >
-            {{ actionLoading ? 'Processing...' : (actionType === 'activate' ? 'Activate' : 'Close') }}
+            {{ actionLoading ? 'Processing...' : actionLabels[actionType] }}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

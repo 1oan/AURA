@@ -40,6 +40,10 @@ export function activateAllocationPeriod(id: string): Promise<void> {
   return apiClient<void>(`/allocation-periods/${id}/activate`, { method: 'POST' })
 }
 
+export function startAllocating(id: string): Promise<void> {
+  return apiClient<void>(`/allocation-periods/${id}/start-allocating`, { method: 'POST' })
+}
+
 export function closeAllocationPeriod(id: string): Promise<void> {
   return apiClient<void>(`/allocation-periods/${id}/close`, { method: 'POST' })
 }
