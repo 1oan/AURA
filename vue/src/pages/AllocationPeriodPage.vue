@@ -181,9 +181,9 @@ function confirmAction(type: 'activate' | 'startAllocating' | 'close', period: A
 }
 
 const actionLabels = {
-  activate: 'Activate',
+  activate: 'Open for Students',
   startAllocating: 'Start Allocating',
-  close: 'Close',
+  close: 'Close Period',
 } as const
 
 async function executeAction() {
@@ -199,7 +199,12 @@ async function executeAction() {
     }
     periods.value = await getAllocationPeriods()
     actionDialogOpen.value = false
-    toast.success(`Period ${actionLabels[actionType.value].toLowerCase()}d.`)
+    const toastMessages = {
+      activate: 'Period opened for students.',
+      startAllocating: 'Allocation started.',
+      close: 'Period closed.',
+    } as const
+    toast.success(toastMessages[actionType.value])
   } catch (e) {
     if (e instanceof ApiError) {
       const data = e.data as { detail?: string }
@@ -278,7 +283,7 @@ async function executeAction() {
             <template v-if="period.status === 'Draft'">
               <Button variant="outline" size="sm" class="h-7 text-xs" @click="confirmAction('activate', period)">
                 <Play class="mr-1 size-3" />
-                Activate
+                Open for Students
               </Button>
               <Button variant="ghost" size="icon" class="size-7" @click="openEdit(period)">
                 <Pencil class="size-3.5" />
@@ -296,7 +301,7 @@ async function executeAction() {
             <template v-else-if="period.status === 'Allocating'">
               <Button variant="outline" size="sm" class="h-7 text-xs" @click="confirmAction('close', period)">
                 <Square class="mr-1 size-3" />
-                Close
+                Close Period
               </Button>
             </template>
           </div>
@@ -367,20 +372,21 @@ async function executeAction() {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {{ actionLabels[actionType] }} Period?
+            {{ actionLabels[actionType] }}?
           </AlertDialogTitle>
           <AlertDialogDescription>
             <template v-if="actionType === 'activate'">
               This will open <strong>{{ actionTarget.name }}</strong> for student participation.
+              Make sure all faculties have uploaded their CSVs and room quotas are assigned.
               Only one period can be active at a time.
             </template>
             <template v-else-if="actionType === 'startAllocating'">
               This will start the allocation process for <strong>{{ actionTarget.name }}</strong>.
-              Students will no longer be able to change preferences.
+              Students will no longer be able to change their preferences.
             </template>
             <template v-else>
-              This will close <strong>{{ actionTarget.name }}</strong> and publish results.
-              This action cannot be undone.
+              This will close <strong>{{ actionTarget.name }}</strong>.
+              This is typically done at the end of the academic year.
             </template>
           </AlertDialogDescription>
         </AlertDialogHeader>
