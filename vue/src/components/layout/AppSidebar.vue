@@ -70,8 +70,6 @@ const allocationNav: NavItem[] = [
   { title: 'Confirmations', url: '/confirmations', icon: CheckCircle2, roles: ['SuperAdmin', 'FacultyAdmin'] },
 ]
 
-const isAdmin = computed(() => ['SuperAdmin', 'FacultyAdmin'].includes(userRole.value))
-
 function visibleItems(items: NavItem[]) {
   return items.filter(item => !item.roles || item.roles.includes(userRole.value))
 }
