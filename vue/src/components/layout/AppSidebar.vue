@@ -86,31 +86,24 @@ function isActive(url: string) {
 
 <template>
   <Sidebar collapsible="icon" class="border-r">
-    <SidebarHeader class="p-4">
+    <SidebarHeader class="p-3 pb-0">
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" as-child class="hover:bg-transparent active:bg-transparent">
-            <router-link to="/" class="flex items-center gap-3">
+            <router-link to="/" class="flex items-center gap-2.5">
               <div
-                class="flex aspect-square size-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground"
+                class="flex aspect-square size-7 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground"
               >
                 A
               </div>
-              <div class="grid flex-1 text-left leading-tight">
-                <span class="text-sm font-semibold tracking-tight">AURA</span>
-                <span class="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">
-                  Room Allocation
-                </span>
-              </div>
+              <span class="text-sm font-semibold tracking-tight">AURA</span>
             </router-link>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarHeader>
 
-    <SidebarSeparator class="mx-4" />
-
-    <SidebarContent class="px-2 pt-2">
+    <SidebarContent class="px-1.5 pt-1.5">
       <SidebarGroup>
         <SidebarGroupContent>
           <SidebarMenu>
@@ -131,7 +124,7 @@ function isActive(url: string) {
       </SidebarGroup>
 
       <SidebarGroup v-if="isAdmin">
-        <SidebarGroupLabel class="mb-0.5 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
+        <SidebarGroupLabel class="px-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
           Management
         </SidebarGroupLabel>
         <SidebarGroupContent>
@@ -153,7 +146,7 @@ function isActive(url: string) {
       </SidebarGroup>
 
       <SidebarGroup>
-        <SidebarGroupLabel class="mb-0.5 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
+        <SidebarGroupLabel class="px-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
           Allocation
         </SidebarGroupLabel>
         <SidebarGroupContent>
@@ -194,9 +187,9 @@ function isActive(url: string) {
       </SidebarGroup>
     </SidebarContent>
 
-    <SidebarSeparator class="mx-4" />
+    <SidebarSeparator class="mx-3" />
 
-    <SidebarFooter class="p-3">
+    <SidebarFooter class="p-2">
       <SidebarMenu>
         <SidebarMenuItem>
           <DropdownMenu>
@@ -205,16 +198,16 @@ function isActive(url: string) {
                 size="lg"
                 class="w-full transition-colors duration-100"
               >
-                <Avatar class="size-7 rounded-md">
-                  <AvatarFallback class="rounded-md bg-primary/10 text-[11px] font-semibold text-primary">
+                <Avatar class="size-6 rounded-md">
+                  <AvatarFallback class="rounded-md bg-primary/10 text-[10px] font-semibold text-primary">
                     {{ authStore.user?.firstName?.[0] ?? '' }}{{ authStore.user?.lastName?.[0] ?? '' }}
                   </AvatarFallback>
                 </Avatar>
-                <div class="grid flex-1 text-left text-sm leading-tight">
-                  <span class="truncate text-[13px] font-medium">{{ authStore.user?.firstName }} {{ authStore.user?.lastName }}</span>
-                  <span class="truncate text-[11px] text-muted-foreground">{{ authStore.user?.email }}</span>
+                <div class="grid flex-1 text-left leading-tight">
+                  <span class="truncate text-[12px] font-medium">{{ authStore.user?.firstName }} {{ authStore.user?.lastName }}</span>
+                  <span class="truncate text-[10px] text-muted-foreground">{{ authStore.user?.email }}</span>
                 </div>
-                <ChevronsUpDown class="ml-auto size-4 text-muted-foreground" />
+                <ChevronsUpDown class="ml-auto size-3.5 text-muted-foreground" />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -222,10 +215,6 @@ function isActive(url: string) {
               side="top"
               align="start"
             >
-              <DropdownMenuItem class="gap-2">
-                <Settings class="size-4" />
-                Settings
-              </DropdownMenuItem>
               <DropdownMenuItem class="gap-2">
                 <ThemeToggle />
               </DropdownMenuItem>
