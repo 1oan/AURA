@@ -60,3 +60,5 @@ TestResults/
 
 # Local only
 docs/
+.claude/
+.superpowers/

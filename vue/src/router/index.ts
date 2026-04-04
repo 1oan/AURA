@@ -17,6 +17,12 @@ const router = createRouter({
       meta: { guest: true },
     },
     {
+      path: '/confirm-email',
+      name: 'confirm-email',
+      component: () => import('@/pages/ConfirmEmailPage.vue'),
+      meta: { requiresAuth: true, skipEmailCheck: true },
+    },
+    {
       path: '/',
       name: 'dashboard',
       component: () => import('@/pages/DashboardPage.vue'),
@@ -90,14 +96,23 @@ router.beforeEach(async (to) => {
     return { name: 'dashboard' }
   }
 
-  if (to.meta.roles && token) {
+  if (to.meta.requiresAuth && token) {
     const authStore = useAuthStore()
     if (!authStore.user) {
       await authStore.fetchCurrentUser()
     }
-    const userRole = authStore.user?.role
-    if (!userRole || !(to.meta.roles as string[]).includes(userRole)) {
-      return { name: 'dashboard' }
+
+    // Redirect unconfirmed users to confirm-email page
+    if (!to.meta.skipEmailCheck && !authStore.isEmailConfirmed) {
+      return { name: 'confirm-email' }
+    }
+
+    // Role-based access control
+    if (to.meta.roles) {
+      const userRole = authStore.user?.role
+      if (!userRole || !(to.meta.roles as string[]).includes(userRole)) {
+        return { name: 'dashboard' }
+      }
     }
   }
 })

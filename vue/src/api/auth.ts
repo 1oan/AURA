@@ -7,6 +7,7 @@ export interface AuthResult {
   firstName: string
   lastName: string
   role: string
+  isEmailConfirmed: boolean
 }
 
 export interface UserDto {
@@ -17,13 +18,12 @@ export interface UserDto {
   role: string
   matriculationCode: string | null
   createdAt: string
+  isEmailConfirmed: boolean
 }
 
 export interface RegisterRequest {
   email: string
   password: string
-  firstName: string
-  lastName: string
 }
 
 export interface LoginRequest {
@@ -42,6 +42,19 @@ export function login(data: LoginRequest): Promise<AuthResult> {
   return apiClient<AuthResult>('/auth/login', {
     method: 'POST',
     body: data,
+  })
+}
+
+export function confirmEmail(code: string): Promise<void> {
+  return apiClient<void>('/auth/confirm-email', {
+    method: 'POST',
+    body: { code },
+  })
+}
+
+export function resendConfirmation(): Promise<void> {
+  return apiClient<void>('/auth/resend-confirmation', {
+    method: 'POST',
   })
 }
 

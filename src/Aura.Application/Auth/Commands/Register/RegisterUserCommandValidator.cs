@@ -9,15 +9,9 @@ public class RegisterUserCommandValidator : AbstractValidator<RegisterUserComman
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email is required.")
             .MaximumLength(256).WithMessage("Email must not exceed 256 characters.")
-            .EmailAddress().WithMessage("Email must be a valid email address.");
-
-        RuleFor(x => x.FirstName)
-            .NotEmpty().WithMessage("First name is required.")
-            .MaximumLength(100).WithMessage("First name must not exceed 100 characters.");
-
-        RuleFor(x => x.LastName)
-            .NotEmpty().WithMessage("Last name is required.")
-            .MaximumLength(100).WithMessage("Last name must not exceed 100 characters.");
+            .EmailAddress().WithMessage("Email must be a valid email address.")
+            .Must(email => email.EndsWith("uaic.ro", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Only institutional emails ending in uaic.ro are allowed.");
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Password is required.")

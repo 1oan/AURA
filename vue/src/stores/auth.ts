@@ -9,6 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isLoading = ref(false)
 
   const isAuthenticated = computed(() => !!token.value)
+  const isEmailConfirmed = computed(() => user.value?.isEmailConfirmed ?? false)
 
   function setAuth(result: authApi.AuthResult) {
     token.value = result.token
@@ -22,19 +23,24 @@ export const useAuthStore = defineStore('auth', () => {
       role: result.role,
       matriculationCode: null,
       createdAt: new Date().toISOString(),
+      isEmailConfirmed: result.isEmailConfirmed,
     }
   }
 
   async function register(data: authApi.RegisterRequest) {
     const result = await authApi.register(data)
     setAuth(result)
-    router.push({ name: 'dashboard' })
+    router.push({ name: 'confirm-email' })
   }
 
   async function login(data: authApi.LoginRequest) {
     const result = await authApi.login(data)
     setAuth(result)
-    router.push({ name: 'dashboard' })
+    if (result.isEmailConfirmed) {
+      router.push({ name: 'dashboard' })
+    } else {
+      router.push({ name: 'confirm-email' })
+    }
   }
 
   function logout() {
@@ -62,6 +68,7 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     isLoading,
     isAuthenticated,
+    isEmailConfirmed,
     register,
     login,
     logout,

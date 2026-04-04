@@ -50,25 +50,29 @@ public class ParticipateCommandHandler(
         if (studentRecord.UserId is not null)
             throw new DomainException("You have already participated in this allocation period.");
 
-        // Identity verification via email
+        // Identity verification: email parts must match CSV names in either order
         var localPart = user.Email.Split('@')[0];
         var segments = localPart.Split('.');
 
         if (segments.Length >= 2)
         {
-            var emailFirstName = NormalizeName(segments[0]);
-            var emailLastName = NormalizeName(segments[^1]);
-            var recordFirstName = NormalizeName(studentRecord.FirstName);
-            var recordLastName = NormalizeName(studentRecord.LastName);
+            var emailPart1 = NormalizeName(segments[0]);
+            var emailPart2 = NormalizeName(segments[^1]);
+            var recordFirst = NormalizeName(studentRecord.FirstName);
+            var recordLast = NormalizeName(studentRecord.LastName);
 
-            if (emailFirstName != recordFirstName || emailLastName != recordLastName)
+            var normalOrder = emailPart1 == recordFirst && emailPart2 == recordLast;
+            var reversedOrder = emailPart1 == recordLast && emailPart2 == recordFirst;
+
+            if (!normalOrder && !reversedOrder)
                 throw new DomainException(
                     "Identity mismatch \u2014 the name in your email does not match the student record. Contact your faculty admin.");
         }
 
         studentRecord.LinkToUser(user.Id);
+        user.UpdateProfile(studentRecord.FirstName, studentRecord.LastName);
+        user.AssignToFaculty(studentRecord.FacultyId);
 
-        // Both user and student record are tracked by the same DbContext
         await studentRecordRepository.SaveChangesAsync(cancellationToken);
 
         return new ParticipateResult(

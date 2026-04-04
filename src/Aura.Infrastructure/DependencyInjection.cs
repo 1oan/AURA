@@ -1,5 +1,6 @@
 using Aura.Application.Common.Interfaces;
 using Aura.Infrastructure.Auth;
+using Aura.Infrastructure.Email;
 using Aura.Infrastructure.Persistence;
 using Aura.Infrastructure.Persistence.Repositories;
 using Aura.Infrastructure.Persistence.Seeding;
@@ -35,7 +36,11 @@ public static class DependencyInjection
         services.AddScoped<IAllocationPeriodRepository, AllocationPeriodRepository>();
         services.AddScoped<IFacultyRoomAllocationRepository, FacultyRoomAllocationRepository>();
         services.AddScoped<IStudentRecordRepository, StudentRecordRepository>();
+        services.AddScoped<IEmailConfirmationCodeRepository, EmailConfirmationCodeRepository>();
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
+
+        services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
+        services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddScoped<DataSeeder>();
 
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));

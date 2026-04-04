@@ -48,7 +48,9 @@ public class DataSeeder(AuraDbContext context)
         if (await context.Users.AnyAsync(u => u.Role == UserRole.SuperAdmin))
             return;
 
-        var admin = User.Create("admin@uaic.ro", "Admin", "admin", BCrypt.Net.BCrypt.HashPassword("Admin123!"));
+        var admin = User.Create("admin@uaic.ro", BCrypt.Net.BCrypt.HashPassword("Admin123!"));
+        admin.UpdateProfile("Admin", "admin");
+        admin.ConfirmEmail();
         admin.SetRole(UserRole.SuperAdmin);
         context.Users.Add(admin);
         await context.SaveChangesAsync();

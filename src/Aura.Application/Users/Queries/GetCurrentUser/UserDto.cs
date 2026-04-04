@@ -7,4 +7,5 @@ public record UserDto(
     string LastName,
     string Role,
     DateTime CreatedAt,
-    string? MatriculationCode);
+    string? MatriculationCode,
+    bool IsEmailConfirmed);
