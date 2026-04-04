@@ -30,6 +30,7 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, U
             user.LastName,
             user.Role.ToString(),
             user.CreatedAt,
-            user.MatriculationCode);
+            user.MatriculationCode,
+            user.IsEmailConfirmed);
     }
 }

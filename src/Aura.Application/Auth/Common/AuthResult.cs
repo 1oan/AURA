@@ -6,4 +6,5 @@ public record AuthResult(
     string Email,
     string FirstName,
     string LastName,
-    string Role);
+    string Role,
+    bool IsEmailConfirmed);

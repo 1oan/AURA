@@ -8,8 +8,6 @@ import { ApiError } from '@/api/client'
 
 const authStore = useAuthStore()
 
-const firstName = ref('')
-const lastName = ref('')
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
@@ -28,8 +26,6 @@ async function handleSubmit() {
 
   try {
     await authStore.register({
-      firstName: firstName.value,
-      lastName: lastName.value,
       email: email.value,
       password: password.value,
     })
@@ -56,7 +52,7 @@ async function handleSubmit() {
       <div class="space-y-2">
         <h1 class="text-2xl font-semibold tracking-tight">Create an account</h1>
         <p class="text-sm text-muted-foreground">
-          Enter your details to get started.
+          Use your institutional email to get started.
         </p>
       </div>
 
@@ -65,36 +61,13 @@ async function handleSubmit() {
           {{ error }}
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div class="space-y-2">
-            <label class="text-sm font-medium" for="firstName">First name</label>
-            <Input
-              id="firstName"
-              v-model="firstName"
-              type="text"
-              placeholder="John"
-              required
-            />
-          </div>
-          <div class="space-y-2">
-            <label class="text-sm font-medium" for="lastName">Last name</label>
-            <Input
-              id="lastName"
-              v-model="lastName"
-              type="text"
-              placeholder="Doe"
-              required
-            />
-          </div>
-        </div>
-
         <div class="space-y-2">
-          <label class="text-sm font-medium" for="email">Email</label>
+          <label class="text-sm font-medium" for="email">Institutional email</label>
           <Input
             id="email"
             v-model="email"
             type="email"
-            placeholder="name@uaic.ro"
+            placeholder="name@student.uaic.ro"
             required
           />
         </div>

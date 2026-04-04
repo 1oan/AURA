@@ -52,6 +52,20 @@ const authStore = useAuthStore()
 
 const userRole = computed(() => authStore.user?.role ?? '')
 
+const displayName = computed(() => {
+  const user = authStore.user
+  if (!user) return ''
+  if (user.firstName) return `${user.firstName} ${user.lastName}`
+  return user.email.split('@')[0] ?? user.email
+})
+
+const initials = computed(() => {
+  const user = authStore.user
+  if (!user) return ''
+  if (user.firstName) return `${user.firstName[0]}${user.lastName[0] ?? ''}`
+  return user.email[0]?.toUpperCase() ?? ''
+})
+
 const mainNav: NavItem[] = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
 ]
@@ -198,11 +212,11 @@ function isActive(url: string) {
               >
                 <Avatar class="size-6 rounded-md">
                   <AvatarFallback class="rounded-md bg-primary/10 text-[10px] font-semibold text-primary">
-                    {{ authStore.user?.firstName?.[0] ?? '' }}{{ authStore.user?.lastName?.[0] ?? '' }}
+                    {{ initials }}
                   </AvatarFallback>
                 </Avatar>
                 <div class="grid flex-1 text-left leading-tight">
-                  <span class="truncate text-[12px] font-medium">{{ authStore.user?.firstName }} {{ authStore.user?.lastName }}</span>
+                  <span class="truncate text-[12px] font-medium">{{ displayName }}</span>
                   <span class="truncate text-[10px] text-muted-foreground">{{ authStore.user?.email }}</span>
                 </div>
                 <ChevronsUpDown class="ml-auto size-3.5 text-muted-foreground" />

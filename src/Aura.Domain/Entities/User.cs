@@ -11,6 +11,7 @@ public class User
     public string LastName { get; private set; } = null!;
     public string PasswordHash { get; private set; } = null!;
     public UserRole Role { get; private set; }
+    public bool IsEmailConfirmed { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? LastLoginAt { get; private set; }
     public string? MatriculationCode { get; private set; }
@@ -19,20 +20,12 @@ public class User
 
     private User() { }
 
-    public static User Create(string email, string firstName, string lastName, string passwordHash)
+    public static User Create(string email, string passwordHash)
     {
         if (string.IsNullOrWhiteSpace(email))
             throw new DomainException("Email is required.");
         if (email.Length > 256)
             throw new DomainException("Email must not exceed 256 characters.");
-        if (string.IsNullOrWhiteSpace(firstName))
-            throw new DomainException("First name is required.");
-        if (firstName.Length > 100)
-            throw new DomainException("First name must not exceed 100 characters.");
-        if (string.IsNullOrWhiteSpace(lastName))
-            throw new DomainException("Last name is required.");
-        if (lastName.Length > 100)
-            throw new DomainException("Last name must not exceed 100 characters.");
         if (string.IsNullOrWhiteSpace(passwordHash))
             throw new DomainException("Password hash is required.");
 
@@ -40,12 +33,21 @@ public class User
         {
             Id = Guid.NewGuid(),
             Email = email.Trim().ToLowerInvariant(),
-            FirstName = firstName.Trim(),
-            LastName = lastName.Trim(),
+            FirstName = string.Empty,
+            LastName = string.Empty,
             PasswordHash = passwordHash,
-            Role = UserRole.User,
+            Role = UserRole.Student,
+            IsEmailConfirmed = false,
             CreatedAt = DateTime.UtcNow
         };
+    }
+
+    public void ConfirmEmail()
+    {
+        if (IsEmailConfirmed)
+            throw new DomainException("Email is already confirmed.");
+
+        IsEmailConfirmed = true;
     }
 
     public void UpdateProfile(string firstName, string lastName)
@@ -86,8 +88,8 @@ public class User
 
     public void AssignToFaculty(Guid facultyId)
     {
-        if (Role != UserRole.FacultyAdmin)
-            throw new DomainException("Only FacultyAdmin users can be assigned to a faculty.");
+        if (Role != UserRole.FacultyAdmin && Role != UserRole.Student)
+            throw new DomainException("Only FacultyAdmin or Student users can be assigned to a faculty.");
         if (facultyId == Guid.Empty)
             throw new DomainException("Faculty ID is required.");
 

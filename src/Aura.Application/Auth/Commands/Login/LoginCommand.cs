@@ -42,6 +42,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResult>
             user.Email,
             user.FirstName,
             user.LastName,
-            user.Role.ToString());
+            user.Role.ToString(),
+            user.IsEmailConfirmed);
     }
 }
