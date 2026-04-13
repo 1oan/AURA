@@ -53,9 +53,9 @@ public class UploadCsvCommandHandler(
 
             var columns = line.Split(',');
 
-            if (columns.Length < 4)
+            if (columns.Length < 5)
             {
-                errors.Add(new CsvRowError(rowNumber, "Expected 4 columns: FirstName, LastName, MatriculationCode, Points."));
+                errors.Add(new CsvRowError(rowNumber, "Expected 5 columns: FirstName, LastName, MatriculationCode, Points, Gender."));
                 continue;
             }
 
@@ -63,6 +63,7 @@ public class UploadCsvCommandHandler(
             var lastName = columns[1].Trim();
             var matriculationCode = columns[2].Trim();
             var pointsRaw = columns[3].Trim();
+            var genderRaw = columns[4].Trim();
 
             if (string.IsNullOrWhiteSpace(firstName))
             {
@@ -94,6 +95,12 @@ public class UploadCsvCommandHandler(
                 continue;
             }
 
+            if (!Enum.TryParse<Domain.Enums.Gender>(genderRaw, ignoreCase: true, out var gender))
+            {
+                errors.Add(new CsvRowError(rowNumber, $"Invalid gender value: '{genderRaw}'. Expected 'Male' or 'Female'."));
+                continue;
+            }
+
             if (!seenCodes.Add(matriculationCode))
             {
                 errors.Add(new CsvRowError(rowNumber, $"Duplicate matriculation code: '{matriculationCode}'."));
@@ -101,7 +108,7 @@ public class UploadCsvCommandHandler(
             }
 
             records.Add(Domain.Entities.StudentRecord.Create(
-                matriculationCode, firstName, lastName, points, facultyId, request.AllocationPeriodId));
+                matriculationCode, firstName, lastName, points, gender, facultyId, request.AllocationPeriodId));
         }
 
         // Re-upload replaces existing records for this faculty+period

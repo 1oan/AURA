@@ -1,3 +1,4 @@
+using Aura.Domain.Enums;
 using Aura.Domain.Exceptions;
 
 namespace Aura.Domain.Entities;
@@ -9,6 +10,7 @@ public class StudentRecord
     public string FirstName { get; private set; } = null!;
     public string LastName { get; private set; } = null!;
     public int Points { get; private set; }
+    public Gender Gender { get; private set; }
     public Guid FacultyId { get; private set; }
     public Faculty? Faculty { get; private set; }
     public Guid AllocationPeriodId { get; private set; }
@@ -23,6 +25,7 @@ public class StudentRecord
         string firstName,
         string lastName,
         int points,
+        Gender gender,
         Guid facultyId,
         Guid allocationPeriodId)
     {
@@ -40,6 +43,8 @@ public class StudentRecord
             throw new DomainException("Last name must not exceed 100 characters.");
         if (points < 0)
             throw new DomainException("Points must be greater than or equal to zero.");
+        if (!Enum.IsDefined(gender))
+            throw new DomainException("Invalid gender value.");
         if (facultyId == Guid.Empty)
             throw new DomainException("Faculty ID is required.");
         if (allocationPeriodId == Guid.Empty)
@@ -52,6 +57,7 @@ public class StudentRecord
             FirstName = firstName.Trim(),
             LastName = lastName.Trim(),
             Points = points,
+            Gender = gender,
             FacultyId = facultyId,
             AllocationPeriodId = allocationPeriodId
         };

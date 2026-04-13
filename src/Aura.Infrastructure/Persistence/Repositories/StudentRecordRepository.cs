@@ -30,6 +30,16 @@ public class StudentRecordRepository(AuraDbContext context) : IStudentRecordRepo
                 && sr.AllocationPeriodId == allocationPeriodId, ct);
     }
 
+    public async Task<int> CountParticipantsByPeriodAndFacultyAsync(
+        Guid allocationPeriodId, Guid facultyId, CancellationToken ct = default)
+    {
+        return await context.StudentRecords
+            .Where(sr => sr.AllocationPeriodId == allocationPeriodId
+                && sr.FacultyId == facultyId
+                && sr.UserId != null)
+            .CountAsync(ct);
+    }
+
     public async Task DeleteByFacultyAndPeriodAsync(
         Guid facultyId, Guid allocationPeriodId, CancellationToken ct = default)
     {

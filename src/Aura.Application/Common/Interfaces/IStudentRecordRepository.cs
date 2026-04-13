@@ -7,6 +7,7 @@ public interface IStudentRecordRepository
     Task<List<StudentRecord>> GetByPeriodAndFacultyAsync(Guid allocationPeriodId, Guid? facultyId, CancellationToken ct = default);
     Task<StudentRecord?> FindByMatriculationCodeAndPeriodAsync(string code, Guid allocationPeriodId, CancellationToken ct = default);
     Task DeleteByFacultyAndPeriodAsync(Guid facultyId, Guid allocationPeriodId, CancellationToken ct = default);
+    Task<int> CountParticipantsByPeriodAndFacultyAsync(Guid allocationPeriodId, Guid facultyId, CancellationToken ct = default);
     Task AddRangeAsync(IEnumerable<StudentRecord> records, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }

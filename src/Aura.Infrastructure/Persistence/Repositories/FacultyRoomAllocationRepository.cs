@@ -15,6 +15,7 @@ public class FacultyRoomAllocationRepository(AuraDbContext context) : IFacultyRo
             .Include(a => a.Faculty)
             .Include(a => a.Room)
                 .ThenInclude(r => r.Dormitory)
+                    .ThenInclude(d => d.Campus)
             .Include(a => a.AllocationPeriod)
             .AsQueryable();
 

@@ -37,6 +37,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasDefaultValue(false);
 
+        builder.Property(u => u.Gender)
+            .HasConversion<int>();
+
         builder.Property(u => u.CreatedAt)
             .IsRequired();
 

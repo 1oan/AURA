@@ -25,6 +25,10 @@ public class StudentRecordConfiguration : IEntityTypeConfiguration<StudentRecord
         builder.Property(sr => sr.Points)
             .IsRequired();
 
+        builder.Property(sr => sr.Gender)
+            .IsRequired()
+            .HasConversion<int>();
+
         builder.HasOne(sr => sr.Faculty)
             .WithMany()
             .HasForeignKey(sr => sr.FacultyId)

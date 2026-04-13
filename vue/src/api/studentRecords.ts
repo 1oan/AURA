@@ -6,6 +6,7 @@ export interface StudentRecordDto {
   firstName: string
   lastName: string
   points: number
+  gender: string
   facultyId: string
   facultyName: string
   facultyAbbreviation: string
