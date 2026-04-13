@@ -72,6 +72,7 @@ public class ParticipateCommandHandler(
         studentRecord.LinkToUser(user.Id);
         user.UpdateProfile(studentRecord.FirstName, studentRecord.LastName);
         user.AssignToFaculty(studentRecord.FacultyId);
+        user.SetGender(studentRecord.Gender);
 
         await studentRecordRepository.SaveChangesAsync(cancellationToken);
 

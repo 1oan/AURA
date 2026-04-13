@@ -12,6 +12,7 @@ public class User
     public string PasswordHash { get; private set; } = null!;
     public UserRole Role { get; private set; }
     public bool IsEmailConfirmed { get; private set; }
+    public Gender? Gender { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? LastLoginAt { get; private set; }
     public string? MatriculationCode { get; private set; }
@@ -109,5 +110,13 @@ public class User
             throw new DomainException("Matriculation code must not exceed 50 characters.");
 
         MatriculationCode = code.Trim();
+    }
+
+    public void SetGender(Gender gender)
+    {
+        if (!Enum.IsDefined(gender))
+            throw new DomainException("Invalid gender value.");
+
+        Gender = gender;
     }
 }

@@ -6,6 +6,7 @@ public record StudentRecordDto(
     string FirstName,
     string LastName,
     int Points,
+    string Gender,
     Guid FacultyId,
     string FacultyName,
     string FacultyAbbreviation,

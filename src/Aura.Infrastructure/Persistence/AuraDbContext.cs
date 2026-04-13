@@ -17,6 +17,7 @@ public sealed class AuraDbContext : DbContext, IApplicationDbContext
     public DbSet<FacultyRoomAllocation> FacultyRoomAllocations => Set<FacultyRoomAllocation>();
     public DbSet<StudentRecord> StudentRecords => Set<StudentRecord>();
     public DbSet<EmailConfirmationCode> EmailConfirmationCodes => Set<EmailConfirmationCode>();
+    public DbSet<DormPreference> DormPreferences => Set<DormPreference>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

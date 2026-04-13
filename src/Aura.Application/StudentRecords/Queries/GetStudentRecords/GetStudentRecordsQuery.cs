@@ -21,6 +21,7 @@ public class GetStudentRecordsQueryHandler(
                 r.FirstName,
                 r.LastName,
                 r.Points,
+                r.Gender.ToString(),
                 r.FacultyId,
                 r.Faculty!.Name,
                 r.Faculty.Abbreviation,

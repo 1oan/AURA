@@ -79,7 +79,7 @@ const managementNav: NavItem[] = [
 
 const allocationNav: NavItem[] = [
   { title: 'Students', url: '/students', icon: Users, roles: ['SuperAdmin', 'FacultyAdmin'] },
-  { title: 'Preferences', url: '/preferences', icon: ListOrdered, roles: ['SuperAdmin', 'FacultyAdmin'] },
+  { title: 'Preferences', url: '/preferences', icon: ListOrdered },
   { title: 'Room Assignment', url: '/room-assignment', icon: DoorOpen, roles: ['SuperAdmin', 'FacultyAdmin'] },
   { title: 'Confirmations', url: '/confirmations', icon: CheckCircle2, roles: ['SuperAdmin', 'FacultyAdmin'] },
 ]

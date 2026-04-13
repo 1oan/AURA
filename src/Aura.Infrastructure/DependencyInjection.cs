@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<IFacultyRoomAllocationRepository, FacultyRoomAllocationRepository>();
         services.AddScoped<IStudentRecordRepository, StudentRecordRepository>();
         services.AddScoped<IEmailConfirmationCodeRepository, EmailConfirmationCodeRepository>();
+        services.AddScoped<IDormPreferenceRepository, DormPreferenceRepository>();
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 
         services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
