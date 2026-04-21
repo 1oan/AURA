@@ -39,24 +39,35 @@ jobs:
         run: dotnet restore Aura.slnx
 
       - name: SonarCloud Begin
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           dotnet sonarscanner begin \
             /k:"1oan_AURA-backend" \
             /o:"1oan" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.exclusions="vue/**,ai-service/**" \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+            /d:sonar.coverage.exclusions="**/Migrations/**,**/Program.cs,**/DependencyInjection.cs,**/*Configuration.cs,**/Persistence/**,**/Email/**,**/Auth/**,**/Services/**,**/Middleware/**,**/Controllers/**,**/*Dto.cs,**/Common/AuthResult.cs,**/Common/Behaviors/ValidationBehavior.cs,**/Common/Exceptions/ValidationException.cs,**/Dashboard/Queries/**,tests/**" \
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
+            /d:sonar.token="$SONAR_TOKEN"
 
       - name: Build
         run: dotnet build Aura.slnx --no-restore -c Release
 
       - name: Test
-        run: dotnet test Aura.slnx --no-build -c Release --verbosity normal
+        run: >
+          dotnet test Aura.slnx
+          --no-build -c Release
+          --settings coverlet.runsettings
+          --collect:"XPlat Code Coverage"
+          --results-directory ./coverage-results
+          --verbosity normal
 
       - name: SonarCloud End
-        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
         env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
   frontend:
     name: Frontend (Vue)

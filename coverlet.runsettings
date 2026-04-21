@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>opencover</Format>
+          <ExcludeByFile>**/Migrations/**/*.cs,**/Program.cs,**/*Configuration.cs,**/DependencyInjection.cs,**/Common/Behaviors/ValidationBehavior.cs,**/Common/Exceptions/ValidationException.cs,**/Dashboard/Queries/**/*.cs,**/*Dto.cs,**/Common/AuthResult.cs</ExcludeByFile>
+          <Exclude>[Aura.Tests]*,[Aura.API]*,[Aura.Infrastructure]*,[*]*.Migrations.*</Exclude>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
