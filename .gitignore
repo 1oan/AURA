@@ -51,7 +51,11 @@ venv/
 
 # Coverage
 coverage/
+coverage-raw/
+coverage-results/
 *.lcov
+*.cobertura.xml
+*.opencover.xml
 TestResults/
 
 # App secrets

@@ -5,4 +5,7 @@
     <Project Path="src/Aura.Domain/Aura.Domain.csproj" />
     <Project Path="src/Aura.Infrastructure/Aura.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Aura.Tests/Aura.Tests.csproj" />
+  </Folder>
 </Solution>
