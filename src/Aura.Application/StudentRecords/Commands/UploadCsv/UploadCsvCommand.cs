@@ -1,4 +1,6 @@
+using System.Globalization;
 using Aura.Application.Common.Interfaces;
+using Aura.Domain.Entities;
 using Aura.Domain.Enums;
 using Aura.Domain.Exceptions;
 using MediatR;
@@ -34,7 +36,7 @@ public class UploadCsvCommandHandler(
 
         var facultyId = user.FacultyId.Value;
         var errors = new List<CsvRowError>();
-        var records = new List<Domain.Entities.StudentRecord>();
+        var records = new List<StudentRecord>();
         var seenCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         using var reader = new StreamReader(request.CsvStream);
@@ -43,79 +45,57 @@ public class UploadCsvCommandHandler(
         while (await reader.ReadLineAsync(cancellationToken) is { } line)
         {
             rowNumber++;
-
-            // Skip header row
-            if (rowNumber == 1)
+            if (rowNumber == 1 || string.IsNullOrWhiteSpace(line))
                 continue;
 
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
-
-            var columns = line.Split(',');
-
-            if (columns.Length < 5)
-            {
-                errors.Add(new CsvRowError(rowNumber, "Expected 5 columns: FirstName, LastName, MatriculationCode, Points, Gender."));
-                continue;
-            }
-
-            var firstName = columns[0].Trim();
-            var lastName = columns[1].Trim();
-            var matriculationCode = columns[2].Trim();
-            var pointsRaw = columns[3].Trim();
-            var genderRaw = columns[4].Trim();
-
-            if (string.IsNullOrWhiteSpace(firstName))
-            {
-                errors.Add(new CsvRowError(rowNumber, "First name is required."));
-                continue;
-            }
-
-            if (string.IsNullOrWhiteSpace(lastName))
-            {
-                errors.Add(new CsvRowError(rowNumber, "Last name is required."));
-                continue;
-            }
-
-            if (string.IsNullOrWhiteSpace(matriculationCode))
-            {
-                errors.Add(new CsvRowError(rowNumber, "Matriculation code is required."));
-                continue;
-            }
-
-            if (!int.TryParse(pointsRaw, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var points))
-            {
-                errors.Add(new CsvRowError(rowNumber, $"Invalid points value: '{pointsRaw}'."));
-                continue;
-            }
-
-            if (points < 0)
-            {
-                errors.Add(new CsvRowError(rowNumber, "Points must be greater than or equal to zero."));
-                continue;
-            }
-
-            if (!Enum.TryParse<Domain.Enums.Gender>(genderRaw, ignoreCase: true, out var gender))
-            {
-                errors.Add(new CsvRowError(rowNumber, $"Invalid gender value: '{genderRaw}'. Expected 'Male' or 'Female'."));
-                continue;
-            }
-
-            if (!seenCodes.Add(matriculationCode))
-            {
-                errors.Add(new CsvRowError(rowNumber, $"Duplicate matriculation code: '{matriculationCode}'."));
-                continue;
-            }
-
-            records.Add(Domain.Entities.StudentRecord.Create(
-                matriculationCode, firstName, lastName, points, gender, facultyId, request.AllocationPeriodId));
+            var (record, error) = ParseRow(rowNumber, line, facultyId, request.AllocationPeriodId, seenCodes);
+            if (error is not null) errors.Add(error);
+            else if (record is not null) records.Add(record);
         }
 
-        // Re-upload replaces existing records for this faculty+period
         await studentRecordRepository.DeleteByFacultyAndPeriodAsync(facultyId, request.AllocationPeriodId, cancellationToken);
         await studentRecordRepository.AddRangeAsync(records, cancellationToken);
         await studentRecordRepository.SaveChangesAsync(cancellationToken);
 
         return new UploadCsvResult(records.Count, errors);
+    }
+
+    private static (StudentRecord? Record, CsvRowError? Error) ParseRow(
+        int rowNumber, string line, Guid facultyId, Guid periodId, HashSet<string> seenCodes)
+    {
+        var columns = line.Split(',');
+        if (columns.Length < 5)
+            return (null, new CsvRowError(rowNumber, "Expected 5 columns: FirstName, LastName, MatriculationCode, Points, Gender."));
+
+        var firstName = columns[0].Trim();
+        var lastName = columns[1].Trim();
+        var matriculationCode = columns[2].Trim();
+        var pointsRaw = columns[3].Trim();
+        var genderRaw = columns[4].Trim();
+
+        if (string.IsNullOrWhiteSpace(firstName))
+            return (null, new CsvRowError(rowNumber, "First name is required."));
+
+        if (string.IsNullOrWhiteSpace(lastName))
+            return (null, new CsvRowError(rowNumber, "Last name is required."));
+
+        if (string.IsNullOrWhiteSpace(matriculationCode))
+            return (null, new CsvRowError(rowNumber, "Matriculation code is required."));
+
+        if (!int.TryParse(pointsRaw, NumberStyles.Any, CultureInfo.InvariantCulture, out var points))
+            return (null, new CsvRowError(rowNumber, $"Invalid points value: '{pointsRaw}'."));
+
+        if (points < 0)
+            return (null, new CsvRowError(rowNumber, "Points must be greater than or equal to zero."));
+
+        if (!Enum.TryParse<Gender>(genderRaw, ignoreCase: true, out var gender))
+            return (null, new CsvRowError(rowNumber, $"Invalid gender value: '{genderRaw}'. Expected 'Male' or 'Female'."));
+
+        if (!seenCodes.Add(matriculationCode))
+            return (null, new CsvRowError(rowNumber, $"Duplicate matriculation code: '{matriculationCode}'."));
+
+        var record = StudentRecord.Create(
+            matriculationCode, firstName, lastName, points, gender, facultyId, periodId);
+        return (record, null);
     }
 }
