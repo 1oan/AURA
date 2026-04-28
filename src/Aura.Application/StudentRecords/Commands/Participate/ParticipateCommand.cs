@@ -40,8 +40,8 @@ public class ParticipateCommandHandler(
         var period = await allocationPeriodRepository.FindByIdAsync(command.AllocationPeriodId, cancellationToken)
             ?? throw new NotFoundException("Allocation period not found.");
 
-        if (period.Status != AllocationPeriodStatus.Open)
-            throw new DomainException("Allocation period is not open for participation.");
+        if (period.Status != AllocationPeriodStatus.Open && period.Status != AllocationPeriodStatus.Allocating)
+            throw new DomainException("Allocation period is not accepting participants.");
 
         var studentRecord = await studentRecordRepository.FindByMatriculationCodeAndPeriodAsync(
             matriculationCode, command.AllocationPeriodId, cancellationToken)

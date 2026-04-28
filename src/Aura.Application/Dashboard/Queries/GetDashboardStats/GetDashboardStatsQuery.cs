@@ -37,16 +37,25 @@ public class GetDashboardStatsQueryHandler(IApplicationDbContext dbContext)
 
         if (activePeriod is not null)
         {
-            allocationsByFaculty = await dbContext.FacultyRoomAllocations
+            var counts = await dbContext.FacultyRoomAllocations
                 .Where(a => a.AllocationPeriodId == activePeriod.Id)
-                .GroupBy(a => new { a.FacultyId, a.Faculty.Name, a.Faculty.Abbreviation })
-                .Select(g => new FacultyAllocationDto(
-                    g.Key.FacultyId,
-                    g.Key.Name,
-                    g.Key.Abbreviation,
-                    g.Count()))
-                .OrderByDescending(f => f.RoomCount)
+                .GroupBy(a => a.FacultyId)
+                .Select(g => new { FacultyId = g.Key, RoomCount = g.Count() })
                 .ToListAsync(cancellationToken);
+
+            var facultyIds = counts.Select(c => c.FacultyId).ToList();
+            var facultiesById = await dbContext.Faculties
+                .Where(f => facultyIds.Contains(f.Id))
+                .ToDictionaryAsync(f => f.Id, cancellationToken);
+
+            allocationsByFaculty = counts
+                .Select(c => new FacultyAllocationDto(
+                    c.FacultyId,
+                    facultiesById.TryGetValue(c.FacultyId, out var fac) ? fac.Name : string.Empty,
+                    facultiesById.TryGetValue(c.FacultyId, out var fac2) ? fac2.Abbreviation : string.Empty,
+                    c.RoomCount))
+                .OrderByDescending(f => f.RoomCount)
+                .ToList();
         }
 
         return new DashboardStatsDto(

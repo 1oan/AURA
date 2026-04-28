@@ -4,6 +4,7 @@ using Aura.Infrastructure.Email;
 using Aura.Infrastructure.Persistence;
 using Aura.Infrastructure.Persistence.Repositories;
 using Aura.Infrastructure.Persistence.Seeding;
+using Aura.Infrastructure.Scheduling;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,6 +39,8 @@ public static class DependencyInjection
         services.AddScoped<IStudentRecordRepository, StudentRecordRepository>();
         services.AddScoped<IEmailConfirmationCodeRepository, EmailConfirmationCodeRepository>();
         services.AddScoped<IDormPreferenceRepository, DormPreferenceRepository>();
+        services.AddScoped<IDormAllocationRepository, DormAllocationRepository>();
+        services.AddScoped<IUpgradeRequestRepository, UpgradeRequestRepository>();
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 
         services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
@@ -46,6 +49,10 @@ public static class DependencyInjection
 
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+
+        services.AddSingleton(TimeProvider.System);
+        services.AddHostedService<AllocationSchedulerService>();
+        services.AddHostedService<AllocationExpirationService>();
 
         return services;
     }

@@ -13,6 +13,8 @@ public class DormPreferenceConfiguration : IEntityTypeConfiguration<DormPreferen
         builder.Property(dp => dp.Rank)
             .IsRequired();
 
+        builder.Property(dp => dp.CreatedAt).IsRequired();
+
         builder.HasOne(dp => dp.User)
             .WithMany()
             .HasForeignKey(dp => dp.UserId)

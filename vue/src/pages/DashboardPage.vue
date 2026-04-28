@@ -10,6 +10,7 @@ import {
   Circle,
   CheckCircle2,
   GraduationCap,
+  Home,
 } from 'lucide-vue-next'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,6 +26,8 @@ import { getAllocationPeriods } from '@/api/allocationPeriods'
 import type { AllocationPeriodDto } from '@/api/allocationPeriods'
 import { getMyEligibility, participate } from '@/api/studentRecords'
 import type { MyEligibilityResult, ParticipateResult } from '@/api/studentRecords'
+import { getMyAllocation } from '@/api/dormAllocations'
+import type { DormAllocationDto } from '@/api/dormAllocations'
 import { ApiError } from '@/api/client'
 
 const authStore = useAuthStore()
@@ -46,6 +49,7 @@ const matricInput = ref('')
 const participating = ref(false)
 const participateError = ref('')
 const activePeriodForStudent = ref<AllocationPeriodDto | null>(null)
+const myAllocation = ref<DormAllocationDto | null | undefined>(undefined)
 
 async function loadDashboard() {
   if (isAdmin.value) {
@@ -67,7 +71,12 @@ async function loadDashboard() {
       const openPeriod = allPeriods.find(p => p.status === 'Open' || p.status === 'Allocating')
       activePeriodForStudent.value = openPeriod ?? null
       if (openPeriod && authStore.user?.matriculationCode) {
-        eligibility.value = await getMyEligibility(openPeriod.id)
+        const [eligResult, allocResult] = await Promise.allSettled([
+          getMyEligibility(openPeriod.id),
+          openPeriod.status === 'Allocating' ? getMyAllocation(openPeriod.id) : Promise.resolve(null),
+        ])
+        if (eligResult.status === 'fulfilled') eligibility.value = eligResult.value
+        if (allocResult.status === 'fulfilled') myAllocation.value = allocResult.value
       }
     } catch {
       // silent
@@ -120,6 +129,12 @@ function statusVariant(status: string) {
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+}
+
+function allocStatusVariant(status: string) {
+  if (status === 'Accepted') return 'default' as const
+  if (status === 'Declined') return 'destructive' as const
+  return 'outline' as const
 }
 </script>
 
@@ -338,6 +353,51 @@ function formatDate(dateStr: string) {
                   <p class="text-sm font-mono">{{ eligibility.matriculationCode }}</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <!-- My Dormitory Allocation (only shown when in Allocating phase) -->
+          <Card v-if="activePeriodForStudent.status === 'Allocating'">
+            <CardHeader class="p-3 pb-2">
+              <CardTitle class="flex items-center gap-2 text-sm font-medium">
+                <Home class="size-4 text-primary" />
+                My Dormitory Allocation
+              </CardTitle>
+            </CardHeader>
+            <CardContent class="p-3 pt-0">
+              <!-- Has allocation -->
+              <template v-if="myAllocation">
+                <p class="text-sm">
+                  You've been placed in
+                  <span class="font-medium">{{ myAllocation.dormitoryName }}</span>
+                  in <span class="font-medium">{{ myAllocation.campusName }}</span>.
+                </p>
+                <div class="mt-2 flex flex-wrap items-center gap-3">
+                  <div class="space-y-0.5">
+                    <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Status</p>
+                    <Badge :variant="allocStatusVariant(myAllocation.status)" class="h-5 px-1.5 text-[10px]">
+                      {{ myAllocation.status }}
+                    </Badge>
+                  </div>
+                  <div class="space-y-0.5">
+                    <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Round</p>
+                    <p class="font-mono text-sm font-medium">{{ myAllocation.round }}</p>
+                  </div>
+                  <div class="space-y-0.5">
+                    <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Allocated</p>
+                    <p class="font-mono text-xs text-muted-foreground">
+                      {{ new Date(myAllocation.allocatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                    </p>
+                  </div>
+                </div>
+              </template>
+              <!-- No allocation yet -->
+              <template v-else-if="myAllocation === null">
+                <p class="text-sm text-muted-foreground">You don't have a dorm allocation yet for this period.</p>
+                <Button variant="outline" size="sm" class="mt-2 h-7 text-xs" as-child>
+                  <router-link to="/preferences">View my preferences</router-link>
+                </Button>
+              </template>
             </CardContent>
           </Card>
         </template>

@@ -28,5 +28,8 @@ public class AllocationPeriodConfiguration : IEntityTypeConfiguration<Allocation
             .IsRequired()
             .HasConversion<int>()
             .HasDefaultValue(AllocationPeriodStatus.Draft);
+
+        builder.Property(ap => ap.Round1Date).IsRequired();
+        builder.Property(ap => ap.ResponseWindowDays).IsRequired();
     }
 }

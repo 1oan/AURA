@@ -38,7 +38,9 @@ public class GetAvailableDormitoriesQueryHandlerTests
         var period = AllocationPeriod.Create(
             "2026-2027",
             new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc));
+            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc),
+            3);
         period.Activate();
         return period;
     }
@@ -222,7 +224,9 @@ public class GetAvailableDormitoriesQueryHandlerTests
     {
         var period = AllocationPeriod.Create("2026-2027",
             new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc));
+            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc),
+            3);
         // Still Draft
 
         _currentUser.GetCurrentUserId().Returns(_userId);
@@ -233,6 +237,6 @@ public class GetAvailableDormitoriesQueryHandlerTests
             new GetAvailableDormitoriesQuery(_periodId), CancellationToken.None);
 
         await act.Should().ThrowAsync<DomainException>()
-            .WithMessage("*not open for preferences*");
+            .WithMessage("*not accepting preference submissions*");
     }
 }

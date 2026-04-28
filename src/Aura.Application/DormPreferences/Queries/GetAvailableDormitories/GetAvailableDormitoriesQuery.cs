@@ -26,8 +26,8 @@ public class GetAvailableDormitoriesQueryHandler(
         var period = await allocationPeriodRepository.FindByIdAsync(query.AllocationPeriodId, cancellationToken)
             ?? throw new NotFoundException("Allocation period not found.");
 
-        if (period.Status != AllocationPeriodStatus.Open)
-            throw new DomainException("Allocation period is not open for preferences.");
+        if (period.Status != AllocationPeriodStatus.Open && period.Status != AllocationPeriodStatus.Allocating)
+            throw new DomainException("Allocation period is not accepting preference submissions.");
 
         var allocations = await facultyRoomAllocationRepository
             .GetByPeriodAndFacultyAsync(query.AllocationPeriodId, user.FacultyId.Value, cancellationToken);

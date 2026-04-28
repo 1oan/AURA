@@ -38,7 +38,9 @@ public class ParticipateCommandHandlerTests
         var period = AllocationPeriod.Create(
             "2026-2027",
             new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc));
+            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc),
+            3);
         period.Activate();
         return period;
     }
@@ -243,7 +245,9 @@ public class ParticipateCommandHandlerTests
         var draftPeriod = AllocationPeriod.Create(
             "2026-2027",
             new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc));
+            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc),
+            3);
 
         _currentUser.GetCurrentUserId().Returns(_userId);
         _users.FindByIdAsync(_userId, Arg.Any<CancellationToken>()).Returns(user);
@@ -253,7 +257,7 @@ public class ParticipateCommandHandlerTests
             new ParticipateCommand(_periodId, null), CancellationToken.None);
 
         await act.Should().ThrowAsync<DomainException>()
-            .WithMessage("Allocation period is not open for participation.");
+            .WithMessage("Allocation period is not accepting participants.");
     }
 
     [Fact]

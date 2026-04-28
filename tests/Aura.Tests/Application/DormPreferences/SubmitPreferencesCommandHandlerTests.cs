@@ -42,7 +42,9 @@ public class SubmitPreferencesCommandHandlerTests
         var period = AllocationPeriod.Create(
             "2026-2027",
             new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc));
+            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc),
+            3);
         period.Activate();
         return period;
     }
@@ -213,7 +215,9 @@ public class SubmitPreferencesCommandHandlerTests
     {
         var period = AllocationPeriod.Create("2026-2027",
             new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc));
+            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc),
+            3);
         // Still Draft
 
         _currentUser.GetCurrentUserId().Returns(_userId);
@@ -224,7 +228,7 @@ public class SubmitPreferencesCommandHandlerTests
             new SubmitPreferencesCommand(_periodId, [_dormA]), CancellationToken.None);
 
         await act.Should().ThrowAsync<DomainException>()
-            .WithMessage("*only be submitted when the allocation period is open*");
+            .WithMessage("*only be submitted while the allocation period is open or allocating*");
     }
 
     // ─── "All dorms" invariant ───────────────────────────────────────────

@@ -11,4 +11,10 @@ public interface IApplicationDbContext
     DbSet<Faculty> Faculties { get; }
     DbSet<AllocationPeriod> AllocationPeriods { get; }
     DbSet<FacultyRoomAllocation> FacultyRoomAllocations { get; }
+    DbSet<DormAllocation> DormAllocations { get; }
+    DbSet<UpgradeRequest> UpgradeRequests { get; }
+    DbSet<UpgradeRequestTarget> UpgradeRequestTargets { get; }
+    DbSet<DormPreference> DormPreferences { get; }
+    DbSet<StudentRecord> StudentRecords { get; }
+    DbSet<User> Users { get; }
 }

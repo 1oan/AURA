@@ -31,6 +31,13 @@ public class UserRepository : IUserRepository
             .AnyAsync(u => u.Email == email, cancellationToken);
     }
 
+    public async Task<List<User>> GetByIdsAsync(List<Guid> userIds, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .Where(u => userIds.Contains(u.Id))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
         await _context.Users.AddAsync(user, cancellationToken);

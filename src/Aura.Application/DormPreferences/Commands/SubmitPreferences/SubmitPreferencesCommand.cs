@@ -28,8 +28,8 @@ public class SubmitPreferencesCommandHandler(
         var period = await allocationPeriodRepository.FindByIdAsync(command.AllocationPeriodId, cancellationToken)
             ?? throw new NotFoundException("Allocation period not found.");
 
-        if (period.Status != AllocationPeriodStatus.Open)
-            throw new DomainException("Preferences can only be submitted when the allocation period is open.");
+        if (period.Status != AllocationPeriodStatus.Open && period.Status != AllocationPeriodStatus.Allocating)
+            throw new DomainException("Preferences can only be submitted while the allocation period is open or allocating.");
 
         // Get available dormitories for this student
         var allocations = await facultyRoomAllocationRepository

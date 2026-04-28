@@ -65,6 +65,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/allocations',
+      name: 'allocations',
+      component: () => import('@/pages/AllocationsPage.vue'),
+      meta: { requiresAuth: true, roles: ['SuperAdmin', 'FacultyAdmin'] },
+    },
+    {
       path: '/room-assignment',
       name: 'room-assignment',
       component: () => import('@/pages/RoomAssignmentPage.vue'),

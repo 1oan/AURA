@@ -50,7 +50,9 @@ function getCampusColor(campusName: string): string {
   return campusColorMap.value.get(campusName) ?? 'bg-muted-foreground'
 }
 
-const isOpen = computed(() => activePeriod.value?.status === 'Open')
+const isOpen = computed(() =>
+  activePeriod.value?.status === 'Open' || activePeriod.value?.status === 'Allocating'
+)
 
 const hasUnsavedChanges = computed(() => {
   if (rankedDorms.value.length === 0) return false
@@ -62,7 +64,7 @@ const hasUnsavedChanges = computed(() => {
 onMounted(async () => {
   try {
     const periods = await getAllocationPeriods()
-    activePeriod.value = periods.find(p => p.status === 'Open') ?? null
+    activePeriod.value = periods.find(p => p.status === 'Open' || p.status === 'Allocating') ?? null
 
     if (!activePeriod.value) {
       loading.value = false

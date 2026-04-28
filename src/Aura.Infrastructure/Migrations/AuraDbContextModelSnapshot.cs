@@ -37,6 +37,12 @@ namespace Aura.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<int>("ResponseWindowDays")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Round1Date")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -73,6 +79,51 @@ namespace Aura.Infrastructure.Migrations
                     b.ToTable("Campuses");
                 });
 
+            modelBuilder.Entity("Aura.Domain.Entities.DormAllocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AllocatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("AllocationPeriodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DormitoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Round")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AllocationPeriodId");
+
+                    b.HasIndex("DormitoryId");
+
+                    b.HasIndex("AllocationPeriodId", "Round");
+
+                    b.HasIndex("UserId", "AllocationPeriodId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_DormAllocation_ActiveOnePerUserPeriod")
+                        .HasFilter("\"Status\" IN ('Pending', 'Accepted')");
+
+                    b.ToTable("DormAllocations");
+                });
+
             modelBuilder.Entity("Aura.Domain.Entities.DormPreference", b =>
                 {
                     b.Property<Guid>("Id")
@@ -81,6 +132,9 @@ namespace Aura.Infrastructure.Migrations
 
                     b.Property<Guid>("AllocationPeriodId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("DormitoryId")
                         .HasColumnType("uuid");
@@ -296,6 +350,64 @@ namespace Aura.Infrastructure.Migrations
                     b.ToTable("StudentRecords");
                 });
 
+            modelBuilder.Entity("Aura.Domain.Entities.UpgradeRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AllocationPeriodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AllocationPeriodId");
+
+                    b.HasIndex("UserId", "AllocationPeriodId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_UpgradeRequest_OneActivePerUserPeriod")
+                        .HasFilter("\"IsActive\" = true");
+
+                    b.ToTable("UpgradeRequests");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.UpgradeRequestTarget", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DormitoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Rank")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UpgradeRequestId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DormitoryId");
+
+                    b.HasIndex("UpgradeRequestId", "DormitoryId")
+                        .IsUnique();
+
+                    b.HasIndex("UpgradeRequestId", "Rank")
+                        .IsUnique();
+
+                    b.ToTable("UpgradeRequestTargets");
+                });
+
             modelBuilder.Entity("Aura.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -358,6 +470,33 @@ namespace Aura.Infrastructure.Migrations
                         .HasFilter("\"MatriculationCode\" IS NOT NULL");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.DormAllocation", b =>
+                {
+                    b.HasOne("Aura.Domain.Entities.AllocationPeriod", "AllocationPeriod")
+                        .WithMany()
+                        .HasForeignKey("AllocationPeriodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aura.Domain.Entities.Dormitory", "Dormitory")
+                        .WithMany()
+                        .HasForeignKey("DormitoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aura.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AllocationPeriod");
+
+                    b.Navigation("Dormitory");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.DormPreference", b =>
@@ -471,6 +610,44 @@ namespace Aura.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Aura.Domain.Entities.UpgradeRequest", b =>
+                {
+                    b.HasOne("Aura.Domain.Entities.AllocationPeriod", "AllocationPeriod")
+                        .WithMany()
+                        .HasForeignKey("AllocationPeriodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aura.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AllocationPeriod");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.UpgradeRequestTarget", b =>
+                {
+                    b.HasOne("Aura.Domain.Entities.Dormitory", "Dormitory")
+                        .WithMany()
+                        .HasForeignKey("DormitoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aura.Domain.Entities.UpgradeRequest", "UpgradeRequest")
+                        .WithMany("Targets")
+                        .HasForeignKey("UpgradeRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Dormitory");
+
+                    b.Navigation("UpgradeRequest");
+                });
+
             modelBuilder.Entity("Aura.Domain.Entities.User", b =>
                 {
                     b.HasOne("Aura.Domain.Entities.Faculty", "Faculty")
@@ -489,6 +666,11 @@ namespace Aura.Infrastructure.Migrations
             modelBuilder.Entity("Aura.Domain.Entities.Dormitory", b =>
                 {
                     b.Navigation("Rooms");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.UpgradeRequest", b =>
+                {
+                    b.Navigation("Targets");
                 });
 #pragma warning restore 612, 618
         }

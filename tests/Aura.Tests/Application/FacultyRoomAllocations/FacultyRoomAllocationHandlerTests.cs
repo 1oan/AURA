@@ -26,7 +26,9 @@ public class AssignRoomsCommandHandlerTests
     {
         var p = AllocationPeriod.Create("2026-2027",
             new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc));
+            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc),
+            3);
         return p;
     }
 
@@ -92,11 +94,41 @@ public class AssignRoomsCommandHandlerTests
 
         await act.Should().ThrowAsync<DomainException>();
     }
+
+    [Fact]
+    public async Task Handle_WhenPeriodAllocating_AssignThrows()
+    {
+        var faculty = Faculty.Create("Informatica", "INF");
+        faculty.SetPrivateProperty("Id", _facultyId);
+
+        var period = Period();
+        period.Activate();
+        period.StartAllocating();
+
+        _faculties.FindByIdAsync(_facultyId, Arg.Any<CancellationToken>()).Returns(faculty);
+        _periods.FindByIdAsync(_periodId, Arg.Any<CancellationToken>()).Returns(period);
+
+        var act = async () => await Create().Handle(
+            new AssignRoomsCommand(_facultyId, _periodId, [Guid.NewGuid()]),
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<DomainException>().WithMessage("*frozen*");
+    }
 }
 
 public class RemoveRoomAssignmentsCommandHandlerTests
 {
+    private readonly IAllocationPeriodRepository _periods = Substitute.For<IAllocationPeriodRepository>();
     private readonly IFacultyRoomAllocationRepository _allocations = Substitute.For<IFacultyRoomAllocationRepository>();
+
+    private RemoveRoomAssignmentsCommandHandler Create() => new(_periods, _allocations);
+
+    private AllocationPeriod DraftPeriod() =>
+        AllocationPeriod.Create("2026-2027",
+            new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc),
+            3);
 
     [Fact]
     public async Task Handle_RemovesExistingAssignments()
@@ -107,11 +139,11 @@ public class RemoveRoomAssignmentsCommandHandlerTests
         var roomB = Guid.NewGuid();
         var allocA = FacultyRoomAllocation.Create(facultyId, roomA, periodId);
         var allocB = FacultyRoomAllocation.Create(facultyId, roomB, periodId);
+        _periods.FindByIdAsync(periodId, Arg.Any<CancellationToken>()).Returns(DraftPeriod());
         _allocations.GetByPeriodAndFacultyAsync(periodId, facultyId, Arg.Any<CancellationToken>())
             .Returns([allocA, allocB]);
 
-        var handler = new RemoveRoomAssignmentsCommandHandler(_allocations);
-        await handler.Handle(new RemoveRoomAssignmentsCommand(facultyId, periodId, [roomA]),
+        await Create().Handle(new RemoveRoomAssignmentsCommand(facultyId, periodId, [roomA]),
             CancellationToken.None);
 
         _allocations.Received(1).RemoveRange(Arg.Is<IEnumerable<FacultyRoomAllocation>>(
@@ -123,15 +155,32 @@ public class RemoveRoomAssignmentsCommandHandlerTests
     {
         var facultyId = Guid.NewGuid();
         var periodId = Guid.NewGuid();
+        _periods.FindByIdAsync(periodId, Arg.Any<CancellationToken>()).Returns(DraftPeriod());
         _allocations.GetByPeriodAndFacultyAsync(periodId, facultyId, Arg.Any<CancellationToken>())
             .Returns([]);
 
-        var handler = new RemoveRoomAssignmentsCommandHandler(_allocations);
-        var act = async () => await handler.Handle(
+        var act = async () => await Create().Handle(
             new RemoveRoomAssignmentsCommand(facultyId, periodId, [Guid.NewGuid()]),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<DomainException>();
+    }
+
+    [Fact]
+    public async Task Handle_WhenPeriodAllocating_RemoveThrows()
+    {
+        var facultyId = Guid.NewGuid();
+        var periodId = Guid.NewGuid();
+        var period = DraftPeriod();
+        period.Activate();
+        period.StartAllocating();
+        _periods.FindByIdAsync(periodId, Arg.Any<CancellationToken>()).Returns(period);
+
+        var act = async () => await Create().Handle(
+            new RemoveRoomAssignmentsCommand(facultyId, periodId, [Guid.NewGuid()]),
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<DomainException>().WithMessage("*frozen*");
     }
 }
 

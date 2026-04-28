@@ -1,4 +1,5 @@
 using Aura.Application.Common.Interfaces;
+using Aura.Domain.Enums;
 using Aura.Domain.Exceptions;
 using MediatR;
 
@@ -8,15 +9,25 @@ public record RemoveRoomAssignmentsCommand(Guid FacultyId, Guid AllocationPeriod
 
 public class RemoveRoomAssignmentsCommandHandler : IRequestHandler<RemoveRoomAssignmentsCommand, Unit>
 {
+    private readonly IAllocationPeriodRepository _periodRepository;
     private readonly IFacultyRoomAllocationRepository _allocationRepository;
 
-    public RemoveRoomAssignmentsCommandHandler(IFacultyRoomAllocationRepository allocationRepository)
+    public RemoveRoomAssignmentsCommandHandler(
+        IAllocationPeriodRepository periodRepository,
+        IFacultyRoomAllocationRepository allocationRepository)
     {
+        _periodRepository = periodRepository;
         _allocationRepository = allocationRepository;
     }
 
     public async Task<Unit> Handle(RemoveRoomAssignmentsCommand request, CancellationToken cancellationToken)
     {
+        var period = await _periodRepository.FindByIdAsync(request.AllocationPeriodId, cancellationToken)
+            ?? throw new NotFoundException("Allocation period not found.");
+
+        if (period.Status == AllocationPeriodStatus.Allocating || period.Status == AllocationPeriodStatus.Closed)
+            throw new DomainException("Faculty room allocations are frozen once the period leaves Draft/Open state.");
+
         var existing = await _allocationRepository.GetByPeriodAndFacultyAsync(
             request.AllocationPeriodId, request.FacultyId, cancellationToken);
 

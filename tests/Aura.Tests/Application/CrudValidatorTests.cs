@@ -210,24 +210,26 @@ public class CreateAllocationPeriodCommandValidatorTests
     private static readonly DateTime Start = new(2026, 9, 1);
     private static readonly DateTime End = new(2027, 7, 1);
 
+    private static readonly DateTime Round1 = new(2026, 9, 15);
+
     [Fact]
     public void Valid_Passes() =>
-        _v.TestValidate(new CreateAllocationPeriodCommand("2026-2027", Start, End))
+        _v.TestValidate(new CreateAllocationPeriodCommand("2026-2027", Start, End, Round1, 3))
             .ShouldNotHaveAnyValidationErrors();
 
     [Fact]
     public void EmptyName_Fails() =>
-        _v.TestValidate(new CreateAllocationPeriodCommand("", Start, End))
+        _v.TestValidate(new CreateAllocationPeriodCommand("", Start, End, Round1, 3))
             .ShouldHaveValidationErrorFor(x => x.Name);
 
     [Fact]
     public void NameTooLong_Fails() =>
-        _v.TestValidate(new CreateAllocationPeriodCommand(new string('a', 201), Start, End))
+        _v.TestValidate(new CreateAllocationPeriodCommand(new string('a', 201), Start, End, Round1, 3))
             .ShouldHaveValidationErrorFor(x => x.Name);
 
     [Fact]
     public void EndDateBeforeStart_Fails() =>
-        _v.TestValidate(new CreateAllocationPeriodCommand("2026-2027", End, Start))
+        _v.TestValidate(new CreateAllocationPeriodCommand("2026-2027", End, Start, Round1, 3))
             .ShouldHaveValidationErrorFor(x => x.EndDate);
 }
 

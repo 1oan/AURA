@@ -26,6 +26,16 @@ public class DormPreferenceRepository(AuraDbContext context) : IDormPreferenceRe
             .CountAsync(cancellationToken);
     }
 
+    public async Task<List<DormPreference>> GetByPeriodAndUsersAsync(
+        Guid allocationPeriodId, List<Guid> userIds, CancellationToken cancellationToken = default)
+    {
+        return await context.DormPreferences
+            .Include(dp => dp.Dormitory)
+            .Where(dp => dp.AllocationPeriodId == allocationPeriodId && userIds.Contains(dp.UserId))
+            .OrderBy(dp => dp.Rank)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddRangeAsync(IEnumerable<DormPreference> preferences, CancellationToken cancellationToken = default)
     {
         await context.DormPreferences.AddRangeAsync(preferences, cancellationToken);
