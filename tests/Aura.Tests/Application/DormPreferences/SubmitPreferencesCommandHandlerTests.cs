@@ -16,6 +16,7 @@ public class SubmitPreferencesCommandHandlerTests
     private readonly IAllocationPeriodRepository _periods = Substitute.For<IAllocationPeriodRepository>();
     private readonly IFacultyRoomAllocationRepository _allocations = Substitute.For<IFacultyRoomAllocationRepository>();
     private readonly IDormPreferenceRepository _preferences = Substitute.For<IDormPreferenceRepository>();
+    private readonly IDormAllocationRepository _dormAllocations = Substitute.For<IDormAllocationRepository>();
 
     private readonly Guid _userId = Guid.NewGuid();
     private readonly Guid _facultyId = Guid.NewGuid();
@@ -25,7 +26,7 @@ public class SubmitPreferencesCommandHandlerTests
     private readonly Guid _dormC = Guid.NewGuid();
 
     private SubmitPreferencesCommandHandler CreateHandler() =>
-        new(_currentUser, _users, _periods, _allocations, _preferences);
+        new(_currentUser, _users, _periods, _allocations, _preferences, _dormAllocations);
 
     private User CreateParticipatedUser()
     {
@@ -283,5 +284,27 @@ public class SubmitPreferencesCommandHandlerTests
 
         await act.Should().ThrowAsync<DomainException>()
             .WithMessage("*rank all available dormitories*");
+    }
+
+    [Fact]
+    public async Task Handle_WhenStudentTerminalInPeriod_Throws()
+    {
+        var period = AllocationPeriod.Create("test",
+            new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc), 3);
+        period.Activate();
+        period.StartAllocating();
+
+        _currentUser.GetCurrentUserId().Returns(_userId);
+        _users.FindByIdAsync(_userId, Arg.Any<CancellationToken>()).Returns(CreateParticipatedUser());
+        _periods.FindByIdAsync(_periodId, Arg.Any<CancellationToken>()).Returns(period);
+        _dormAllocations.HasTerminalForUserAndPeriodAsync(_userId, _periodId, Arg.Any<CancellationToken>())
+            .Returns(true);
+
+        var act = async () => await CreateHandler().Handle(
+            new SubmitPreferencesCommand(_periodId, [_dormA]), CancellationToken.None);
+
+        await act.Should().ThrowAsync<DomainException>().WithMessage("*no longer eligible*");
     }
 }

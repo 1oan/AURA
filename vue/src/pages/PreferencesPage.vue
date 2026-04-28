@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Building2, GripVertical, Save } from 'lucide-vue-next'
+import { Ban, Building2, GripVertical, Save } from 'lucide-vue-next'
 import { ApiError } from '@/api/client'
 import { getAllocationPeriods } from '@/api/allocationPeriods'
 import type { AllocationPeriodDto } from '@/api/allocationPeriods'
@@ -27,6 +27,7 @@ interface RankedDorm {
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
+const notEligible = ref(false)
 const activePeriod = ref<AllocationPeriodDto | null>(null)
 const rankedDorms = ref<RankedDorm[]>([])
 const savedOrder = ref<string[]>([])
@@ -71,31 +72,44 @@ onMounted(async () => {
       return
     }
 
-    const [available, existing] = await Promise.all([
-      getAvailableDormitories(activePeriod.value.id),
-      getMyPreferences(activePeriod.value.id),
-    ])
+    try {
+      const [available, existing] = await Promise.all([
+        getAvailableDormitories(activePeriod.value.id),
+        getMyPreferences(activePeriod.value.id),
+      ])
 
-    if (existing.length > 0) {
-      hasExistingPreferences.value = true
-      rankedDorms.value = existing.map(p => ({
-        dormitoryId: p.dormitoryId,
-        dormitoryName: p.dormitoryName,
-        campusName: p.campusName,
-        availableSpots: available.find(a => a.dormitoryId === p.dormitoryId)?.availableSpots ?? 0,
-      }))
-      savedOrder.value = existing.map(p => p.dormitoryId)
-    } else {
-      rankedDorms.value = available.map(a => ({
-        dormitoryId: a.dormitoryId,
-        dormitoryName: a.dormitoryName,
-        campusName: a.campusName,
-        availableSpots: a.availableSpots,
-      }))
-      savedOrder.value = []
+      if (existing.length > 0) {
+        hasExistingPreferences.value = true
+        rankedDorms.value = existing.map(p => ({
+          dormitoryId: p.dormitoryId,
+          dormitoryName: p.dormitoryName,
+          campusName: p.campusName,
+          availableSpots: available.find(a => a.dormitoryId === p.dormitoryId)?.availableSpots ?? 0,
+        }))
+        savedOrder.value = existing.map(p => p.dormitoryId)
+      } else {
+        rankedDorms.value = available.map(a => ({
+          dormitoryId: a.dormitoryId,
+          dormitoryName: a.dormitoryName,
+          campusName: a.campusName,
+          availableSpots: a.availableSpots,
+        }))
+        savedOrder.value = []
+      }
+
+      assignCampusColors(rankedDorms.value)
+    } catch (e) {
+      if (e instanceof ApiError) {
+        const data = e.data as { detail?: string }
+        if (data.detail?.toLowerCase().includes('no longer eligible')) {
+          notEligible.value = true
+        } else {
+          error.value = data.detail ?? 'Failed to load preferences.'
+        }
+      } else {
+        throw e
+      }
     }
-
-    assignCampusColors(rankedDorms.value)
   } catch (e) {
     if (e instanceof ApiError) {
       const data = e.data as { detail?: string }
@@ -146,6 +160,15 @@ async function handleSubmit() {
         <Skeleton class="h-10 w-full" />
         <Skeleton class="h-64 w-full" />
       </div>
+
+      <!-- Not eligible (terminal allocation) -->
+      <Card v-else-if="notEligible">
+        <CardContent class="flex flex-col items-center justify-center py-12">
+          <Ban class="mb-3 size-10 text-muted-foreground" />
+          <p class="text-sm font-medium">You are no longer eligible</p>
+          <p class="text-xs text-muted-foreground">Your previous allocation has expired or was declined. You are no longer in this period's pool.</p>
+        </CardContent>
+      </Card>
 
       <!-- No active period -->
       <Card v-else-if="!activePeriod">

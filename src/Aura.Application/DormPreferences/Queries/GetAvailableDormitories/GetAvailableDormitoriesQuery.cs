@@ -12,7 +12,8 @@ public class GetAvailableDormitoriesQueryHandler(
     ICurrentUserService currentUserService,
     IUserRepository userRepository,
     IAllocationPeriodRepository allocationPeriodRepository,
-    IFacultyRoomAllocationRepository facultyRoomAllocationRepository) : IRequestHandler<GetAvailableDormitoriesQuery, List<AvailableDormitoryDto>>
+    IFacultyRoomAllocationRepository facultyRoomAllocationRepository,
+    IDormAllocationRepository dormAllocationRepository) : IRequestHandler<GetAvailableDormitoriesQuery, List<AvailableDormitoryDto>>
 {
     public async Task<List<AvailableDormitoryDto>> Handle(GetAvailableDormitoriesQuery query, CancellationToken cancellationToken)
     {
@@ -28,6 +29,9 @@ public class GetAvailableDormitoriesQueryHandler(
 
         if (period.Status != AllocationPeriodStatus.Open && period.Status != AllocationPeriodStatus.Allocating)
             throw new DomainException("Allocation period is not accepting preference submissions.");
+
+        if (await dormAllocationRepository.HasTerminalForUserAndPeriodAsync(userId, query.AllocationPeriodId, cancellationToken))
+            throw new DomainException("You are no longer eligible to submit preferences for this period.");
 
         var allocations = await facultyRoomAllocationRepository
             .GetByPeriodAndFacultyAsync(query.AllocationPeriodId, user.FacultyId.Value, cancellationToken);

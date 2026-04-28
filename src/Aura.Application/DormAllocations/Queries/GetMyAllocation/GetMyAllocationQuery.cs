@@ -13,7 +13,7 @@ public class GetMyAllocationQueryHandler(
     public async Task<DormAllocationDto?> Handle(GetMyAllocationQuery request, CancellationToken cancellationToken)
     {
         var userId = currentUserService.GetCurrentUserId();
-        var allocation = await dormAllocationRepository.FindActiveByUserAndPeriodAsync(
+        var allocation = await dormAllocationRepository.FindLatestByUserAndPeriodAsync(
             userId, request.AllocationPeriodId, cancellationToken);
         if (allocation is null) return null;
 

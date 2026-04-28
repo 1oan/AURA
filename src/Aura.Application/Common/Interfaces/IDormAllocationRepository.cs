@@ -10,6 +10,9 @@ public interface IDormAllocationRepository
     Task<DormAllocation?> FindActiveByUserAndPeriodAsync(
         Guid userId, Guid allocationPeriodId, CancellationToken cancellationToken = default);
 
+    Task<DormAllocation?> FindLatestByUserAndPeriodAsync(
+        Guid userId, Guid allocationPeriodId, CancellationToken cancellationToken = default);
+
     Task<List<DormAllocation>> GetByPeriodAsync(
         Guid allocationPeriodId, CancellationToken cancellationToken = default);
 

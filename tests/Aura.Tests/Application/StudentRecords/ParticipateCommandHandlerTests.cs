@@ -15,13 +15,14 @@ public class ParticipateCommandHandlerTests
     private readonly IUserRepository _users = Substitute.For<IUserRepository>();
     private readonly IAllocationPeriodRepository _periods = Substitute.For<IAllocationPeriodRepository>();
     private readonly IStudentRecordRepository _records = Substitute.For<IStudentRecordRepository>();
+    private readonly IDormAllocationRepository _dormAllocations = Substitute.For<IDormAllocationRepository>();
 
     private readonly Guid _userId = Guid.NewGuid();
     private readonly Guid _periodId = Guid.NewGuid();
     private readonly Guid _facultyId = Guid.NewGuid();
 
     private ParticipateCommandHandler CreateHandler() =>
-        new(_currentUser, _users, _periods, _records);
+        new(_currentUser, _users, _periods, _records, _dormAllocations);
 
     // ─── Test data factories ─────────────────────────────────────────────
 
@@ -302,12 +303,31 @@ public class ParticipateCommandHandlerTests
             .WithMessage("You have already participated in this allocation period.");
     }
 
+    [Fact]
+    public async Task Handle_WhenStudentTerminalInPeriod_Throws()
+    {
+        var user = CreateUser("ioan.virlescu@student.uaic.ro");
+        user.SetMatriculationCode("CS2024001");
+        var period = CreateOpenPeriod();
+
+        _currentUser.GetCurrentUserId().Returns(_userId);
+        _users.FindByIdAsync(_userId, Arg.Any<CancellationToken>()).Returns(user);
+        _periods.FindByIdAsync(_periodId, Arg.Any<CancellationToken>()).Returns(period);
+        _dormAllocations.HasTerminalForUserAndPeriodAsync(_userId, _periodId, Arg.Any<CancellationToken>())
+            .Returns(true);
+
+        var act = async () => await CreateHandler().Handle(
+            new ParticipateCommand(_periodId, null), CancellationToken.None);
+
+        await act.Should().ThrowAsync<DomainException>().WithMessage("*no longer eligible*");
+    }
+
     // ─── Matriculation code handling ─────────────────────────────────────
 
     [Fact]
     public async Task Handle_WithCommandMatriculationCode_PersistsItToUserProfile()
     {
-        var user = CreateUser("ioan.virlescu@student.uaic.ro");
+        var user = CreateUser("Ioan.virlescu@student.uaic.ro");
         // user has no matriculation code yet
         var period = CreateOpenPeriod();
         var record = CreateStudentRecord("Ioan", "Virlescu");

@@ -9,6 +9,7 @@ import {
   ArrowRight,
   Circle,
   CheckCircle2,
+  CircleSlash2,
   GraduationCap,
   Home,
 } from 'lucide-vue-next'
@@ -73,7 +74,7 @@ async function loadDashboard() {
       if (openPeriod && authStore.user?.matriculationCode) {
         const [eligResult, allocResult] = await Promise.allSettled([
           getMyEligibility(openPeriod.id),
-          openPeriod.status === 'Allocating' ? getMyAllocation(openPeriod.id) : Promise.resolve(null),
+          getMyAllocation(openPeriod.id),
         ])
         if (eligResult.status === 'fulfilled') eligibility.value = eligResult.value
         if (allocResult.status === 'fulfilled') myAllocation.value = allocResult.value
@@ -134,8 +135,64 @@ function formatDate(dateStr: string) {
 function allocStatusVariant(status: string) {
   if (status === 'Accepted') return 'default' as const
   if (status === 'Declined') return 'destructive' as const
+  if (status === 'Expired') return 'secondary' as const
+  if (status === 'Replaced') return 'secondary' as const
   return 'outline' as const
 }
+
+const participationSubtext = computed(() => {
+  const status = myAllocation.value?.status
+  switch (status) {
+    case 'Pending':
+      return 'You have been placed for this period. Please respond before the window closes.'
+    case 'Accepted':
+      return 'You have accepted your placement for this period.'
+    case 'Declined':
+    case 'Expired':
+    case 'Replaced':
+      return 'Your participation in this period has ended.'
+    default:
+      return 'Your allocation will be processed when the period enters the allocating phase.'
+  }
+})
+
+const isParticipationTerminal = computed(() => {
+  const status = myAllocation.value?.status
+  return status === 'Declined' || status === 'Expired' || status === 'Replaced'
+})
+
+const participationCardClass = computed(() =>
+  isParticipationTerminal.value
+    ? 'border-muted-foreground/20 bg-muted/40'
+    : 'border-emerald-500/30 bg-emerald-500/5'
+)
+
+const participationIcon = computed(() =>
+  isParticipationTerminal.value ? CircleSlash2 : CheckCircle2
+)
+
+const participationIconClass = computed(() =>
+  isParticipationTerminal.value ? 'size-5 text-muted-foreground' : 'size-5 text-emerald-600'
+)
+
+const allocationCopy = computed(() => {
+  const a = myAllocation.value
+  if (!a) return ''
+  switch (a.status) {
+    case 'Pending':
+      return `You've been placed in ${a.dormitoryName} in ${a.campusName}. Awaiting your response.`
+    case 'Accepted':
+      return `You've accepted your placement in ${a.dormitoryName} in ${a.campusName}.`
+    case 'Declined':
+      return `You declined your allocation in ${a.dormitoryName}. You are no longer in this period's pool.`
+    case 'Expired':
+      return `Your allocation in ${a.dormitoryName} expired because you didn't respond in time. You are no longer in this period's pool.`
+    case 'Replaced':
+      return `Your previous allocation in ${a.dormitoryName} was replaced by a newer one.`
+    default:
+      return `Your allocation status: ${a.status}.`
+  }
+})
 </script>
 
 <template>
@@ -322,13 +379,13 @@ function allocStatusVariant(status: string) {
 
         <!-- Already participated -->
         <template v-else-if="eligibility?.hasParticipated">
-          <Card class="border-emerald-500/30 bg-emerald-500/5">
+          <Card :class="participationCardClass">
             <CardContent class="p-4">
               <div class="flex items-center gap-3">
-                <CheckCircle2 class="size-5 text-emerald-600" />
+                <component :is="participationIcon" :class="participationIconClass" />
                 <div>
                   <p class="text-sm font-medium">You are participating in {{ activePeriodForStudent.name }}</p>
-                  <p class="text-xs text-muted-foreground">Your allocation will be processed when the period enters the allocating phase.</p>
+                  <p class="text-xs text-muted-foreground">{{ participationSubtext }}</p>
                 </div>
               </div>
             </CardContent>
@@ -356,8 +413,8 @@ function allocStatusVariant(status: string) {
             </CardContent>
           </Card>
 
-          <!-- My Dormitory Allocation (only shown when in Allocating phase) -->
-          <Card v-if="activePeriodForStudent.status === 'Allocating'">
+          <!-- My Dormitory Allocation -->
+          <Card>
             <CardHeader class="p-3 pb-2">
               <CardTitle class="flex items-center gap-2 text-sm font-medium">
                 <Home class="size-4 text-primary" />
@@ -365,13 +422,12 @@ function allocStatusVariant(status: string) {
               </CardTitle>
             </CardHeader>
             <CardContent class="p-3 pt-0">
+              <!-- Loading -->
+              <Skeleton v-if="myAllocation === undefined" class="h-12" />
+
               <!-- Has allocation -->
-              <template v-if="myAllocation">
-                <p class="text-sm">
-                  You've been placed in
-                  <span class="font-medium">{{ myAllocation.dormitoryName }}</span>
-                  in <span class="font-medium">{{ myAllocation.campusName }}</span>.
-                </p>
+              <template v-else-if="myAllocation">
+                <p class="text-sm">{{ allocationCopy }}</p>
                 <div class="mt-2 flex flex-wrap items-center gap-3">
                   <div class="space-y-0.5">
                     <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Status</p>
@@ -390,9 +446,16 @@ function allocStatusVariant(status: string) {
                     </p>
                   </div>
                 </div>
+                <p
+                  v-if="myAllocation.status === 'Declined' || myAllocation.status === 'Expired'"
+                  class="mt-2 text-xs text-muted-foreground"
+                >
+                  Contact your faculty admin if this is wrong.
+                </p>
               </template>
+
               <!-- No allocation yet -->
-              <template v-else-if="myAllocation === null">
+              <template v-else>
                 <p class="text-sm text-muted-foreground">You don't have a dorm allocation yet for this period.</p>
                 <Button variant="outline" size="sm" class="mt-2 h-7 text-xs" as-child>
                   <router-link to="/preferences">View my preferences</router-link>
