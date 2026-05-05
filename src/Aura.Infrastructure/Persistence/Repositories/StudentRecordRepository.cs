@@ -21,6 +21,26 @@ public class StudentRecordRepository(AuraDbContext context) : IStudentRecordRepo
             .ToListAsync(ct);
     }
 
+    public async Task<List<StudentRecord>> GetByPeriodAsync(
+        Guid allocationPeriodId, CancellationToken ct = default)
+    {
+        return await context.StudentRecords
+            .Include(sr => sr.Faculty)
+            .Where(sr => sr.AllocationPeriodId == allocationPeriodId)
+            .OrderByDescending(sr => sr.Points)
+            .ToListAsync(ct);
+    }
+
+    public async Task<List<StudentRecord>> GetByPeriodAndUsersAsync(
+        Guid allocationPeriodId, List<Guid> userIds, CancellationToken ct = default)
+    {
+        return await context.StudentRecords
+            .Include(sr => sr.Faculty)
+            .Where(sr => sr.AllocationPeriodId == allocationPeriodId && userIds.Contains(sr.UserId!.Value))
+            .OrderByDescending(sr => sr.Points)
+            .ToListAsync(ct);
+    }
+
     public async Task<StudentRecord?> FindByMatriculationCodeAndPeriodAsync(
         string code, Guid allocationPeriodId, CancellationToken ct = default)
     {

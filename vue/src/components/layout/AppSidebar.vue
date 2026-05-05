@@ -15,6 +15,7 @@ import {
   Settings,
   ChevronsUpDown,
   LogOut,
+  Sparkles,
 } from 'lucide-vue-next'
 import {
   Sidebar,
@@ -80,6 +81,7 @@ const managementNav: NavItem[] = [
 const allocationNav: NavItem[] = [
   { title: 'Students', url: '/students', icon: Users, roles: ['SuperAdmin', 'FacultyAdmin'] },
   { title: 'Preferences', url: '/preferences', icon: ListOrdered },
+  { title: 'Allocations', url: '/allocations', icon: Sparkles, roles: ['SuperAdmin', 'FacultyAdmin'] },
   { title: 'Room Assignment', url: '/room-assignment', icon: DoorOpen, roles: ['SuperAdmin', 'FacultyAdmin'] },
   { title: 'Confirmations', url: '/confirmations', icon: CheckCircle2, roles: ['SuperAdmin', 'FacultyAdmin'] },
 ]

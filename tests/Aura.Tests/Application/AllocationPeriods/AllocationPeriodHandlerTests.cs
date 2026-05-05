@@ -19,7 +19,7 @@ public static class PeriodFactory
     public static readonly DateTime Start = new(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
     public static readonly DateTime End = new(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc);
 
-    public static AllocationPeriod Draft() => AllocationPeriod.Create("2026-2027", Start, End);
+    public static AllocationPeriod Draft() => AllocationPeriod.Create("2026-2027", Start, End, Start.AddDays(14), 3);
 
     public static AllocationPeriod Open()
     {
@@ -45,7 +45,7 @@ public class CreateAllocationPeriodCommandHandlerTests
     {
         var handler = new CreateAllocationPeriodCommandHandler(_repo);
         var result = await handler.Handle(
-            new CreateAllocationPeriodCommand("2026-2027", PeriodFactory.Start, PeriodFactory.End),
+            new CreateAllocationPeriodCommand("2026-2027", PeriodFactory.Start, PeriodFactory.End, PeriodFactory.Start.AddDays(14), 3),
             CancellationToken.None);
 
         result.Name.Should().Be("2026-2027");

@@ -9,6 +9,7 @@ public class DormPreference
     public Guid AllocationPeriodId { get; private set; }
     public Guid DormitoryId { get; private set; }
     public int Rank { get; private set; }
+    public DateTime CreatedAt { get; private set; }
 
     public User? User { get; private set; }
     public AllocationPeriod? AllocationPeriod { get; private set; }
@@ -33,7 +34,8 @@ public class DormPreference
             UserId = userId,
             AllocationPeriodId = allocationPeriodId,
             DormitoryId = dormitoryId,
-            Rank = rank
+            Rank = rank,
+            CreatedAt = DateTime.UtcNow,
         };
     }
 }

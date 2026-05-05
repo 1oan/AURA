@@ -15,13 +15,14 @@ public class GetAvailableDormitoriesQueryHandlerTests
     private readonly IUserRepository _users = Substitute.For<IUserRepository>();
     private readonly IAllocationPeriodRepository _periods = Substitute.For<IAllocationPeriodRepository>();
     private readonly IFacultyRoomAllocationRepository _allocations = Substitute.For<IFacultyRoomAllocationRepository>();
+    private readonly IDormAllocationRepository _dormAllocations = Substitute.For<IDormAllocationRepository>();
 
     private readonly Guid _userId = Guid.NewGuid();
     private readonly Guid _facultyId = Guid.NewGuid();
     private readonly Guid _periodId = Guid.NewGuid();
 
     private GetAvailableDormitoriesQueryHandler CreateHandler() =>
-        new(_currentUser, _users, _periods, _allocations);
+        new(_currentUser, _users, _periods, _allocations, _dormAllocations);
 
     private User CreateParticipatedUser(Gender gender = Gender.Male)
     {
@@ -38,7 +39,9 @@ public class GetAvailableDormitoriesQueryHandlerTests
         var period = AllocationPeriod.Create(
             "2026-2027",
             new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc));
+            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc),
+            3);
         period.Activate();
         return period;
     }
@@ -222,7 +225,9 @@ public class GetAvailableDormitoriesQueryHandlerTests
     {
         var period = AllocationPeriod.Create("2026-2027",
             new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc));
+            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc),
+            3);
         // Still Draft
 
         _currentUser.GetCurrentUserId().Returns(_userId);
@@ -233,6 +238,29 @@ public class GetAvailableDormitoriesQueryHandlerTests
             new GetAvailableDormitoriesQuery(_periodId), CancellationToken.None);
 
         await act.Should().ThrowAsync<DomainException>()
-            .WithMessage("*not open for preferences*");
+            .WithMessage("*not accepting preference submissions*");
+    }
+
+    [Fact]
+    public async Task Handle_WhenStudentTerminalInPeriod_Throws()
+    {
+        var period = AllocationPeriod.Create("2026-2027",
+            new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc),
+            3);
+        period.Activate();
+        period.StartAllocating();
+
+        _currentUser.GetCurrentUserId().Returns(_userId);
+        _users.FindByIdAsync(_userId, Arg.Any<CancellationToken>()).Returns(CreateParticipatedUser());
+        _periods.FindByIdAsync(_periodId, Arg.Any<CancellationToken>()).Returns(period);
+        _dormAllocations.HasTerminalForUserAndPeriodAsync(_userId, _periodId, Arg.Any<CancellationToken>())
+            .Returns(true);
+
+        var act = async () => await CreateHandler().Handle(
+            new GetAvailableDormitoriesQuery(_periodId), CancellationToken.None);
+
+        await act.Should().ThrowAsync<DomainException>().WithMessage("*no longer eligible*");
     }
 }

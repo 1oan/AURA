@@ -16,7 +16,7 @@ public class AllocationPeriodTests
     [Fact]
     public void Create_WithValidInputs_ReturnsPeriodInDraftStatus()
     {
-        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd);
+        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd, ValidStart.AddDays(14), 3);
 
         period.Id.Should().NotBe(Guid.Empty);
         period.Name.Should().Be(ValidName);
@@ -28,7 +28,7 @@ public class AllocationPeriodTests
     [Fact]
     public void Create_TrimsName()
     {
-        var period = AllocationPeriod.Create("  2026-2027  ", ValidStart, ValidEnd);
+        var period = AllocationPeriod.Create("  2026-2027  ", ValidStart, ValidEnd, ValidStart.AddDays(14), 3);
 
         period.Name.Should().Be("2026-2027");
     }
@@ -39,7 +39,7 @@ public class AllocationPeriodTests
         var localStart = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Local);
         var localEnd = new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Local);
 
-        var period = AllocationPeriod.Create(ValidName, localStart, localEnd);
+        var period = AllocationPeriod.Create(ValidName, localStart, localEnd, localStart.AddDays(14), 3);
 
         period.StartDate.Kind.Should().Be(DateTimeKind.Utc);
         period.EndDate.Kind.Should().Be(DateTimeKind.Utc);
@@ -51,7 +51,7 @@ public class AllocationPeriodTests
     [InlineData(null)]
     public void Create_WithEmptyName_ThrowsDomainException(string? name)
     {
-        var act = () => AllocationPeriod.Create(name!, ValidStart, ValidEnd);
+        var act = () => AllocationPeriod.Create(name!, ValidStart, ValidEnd, ValidStart.AddDays(14), 3);
 
         act.Should().Throw<DomainException>().WithMessage("Allocation period name is required.");
     }
@@ -61,7 +61,7 @@ public class AllocationPeriodTests
     {
         var longName = new string('a', 201);
 
-        var act = () => AllocationPeriod.Create(longName, ValidStart, ValidEnd);
+        var act = () => AllocationPeriod.Create(longName, ValidStart, ValidEnd, ValidStart.AddDays(14), 3);
 
         act.Should().Throw<DomainException>().WithMessage("Allocation period name must not exceed 200 characters.");
     }
@@ -69,7 +69,7 @@ public class AllocationPeriodTests
     [Fact]
     public void Create_WithEndDateBeforeStartDate_ThrowsDomainException()
     {
-        var act = () => AllocationPeriod.Create(ValidName, ValidEnd, ValidStart);
+        var act = () => AllocationPeriod.Create(ValidName, ValidEnd, ValidStart, ValidEnd.AddDays(14), 3);
 
         act.Should().Throw<DomainException>().WithMessage("End date must be after start date.");
     }
@@ -77,7 +77,7 @@ public class AllocationPeriodTests
     [Fact]
     public void Create_WithEndDateEqualToStartDate_ThrowsDomainException()
     {
-        var act = () => AllocationPeriod.Create(ValidName, ValidStart, ValidStart);
+        var act = () => AllocationPeriod.Create(ValidName, ValidStart, ValidStart, ValidStart.AddDays(14), 3);
 
         act.Should().Throw<DomainException>().WithMessage("End date must be after start date.");
     }
@@ -87,7 +87,7 @@ public class AllocationPeriodTests
     [Fact]
     public void Activate_FromDraft_TransitionsToOpen()
     {
-        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd);
+        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd, ValidStart.AddDays(14), 3);
 
         period.Activate();
 
@@ -97,7 +97,7 @@ public class AllocationPeriodTests
     [Fact]
     public void Activate_FromOpen_ThrowsDomainException()
     {
-        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd);
+        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd, ValidStart.AddDays(14), 3);
         period.Activate();
 
         var act = () => period.Activate();
@@ -130,7 +130,7 @@ public class AllocationPeriodTests
     [Fact]
     public void StartAllocating_FromOpen_TransitionsToAllocating()
     {
-        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd);
+        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd, ValidStart.AddDays(14), 3);
         period.Activate();
 
         period.StartAllocating();
@@ -141,7 +141,7 @@ public class AllocationPeriodTests
     [Fact]
     public void StartAllocating_FromDraft_ThrowsDomainException()
     {
-        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd);
+        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd, ValidStart.AddDays(14), 3);
 
         var act = () => period.StartAllocating();
 
@@ -183,7 +183,7 @@ public class AllocationPeriodTests
     [Fact]
     public void Close_FromDraft_ThrowsDomainException()
     {
-        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd);
+        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd, ValidStart.AddDays(14), 3);
 
         var act = () => period.Close();
 
@@ -193,7 +193,7 @@ public class AllocationPeriodTests
     [Fact]
     public void Close_FromOpen_ThrowsDomainException()
     {
-        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd);
+        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd, ValidStart.AddDays(14), 3);
         period.Activate();
 
         var act = () => period.Close();
@@ -216,7 +216,7 @@ public class AllocationPeriodTests
     [Fact]
     public void Update_WhenDraft_UpdatesFields()
     {
-        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd);
+        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd, ValidStart.AddDays(14), 3);
         var newStart = ValidStart.AddDays(1);
         var newEnd = ValidEnd.AddDays(1);
 
@@ -230,7 +230,7 @@ public class AllocationPeriodTests
     [Fact]
     public void Update_WhenOpen_ThrowsDomainException()
     {
-        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd);
+        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd, ValidStart.AddDays(14), 3);
         period.Activate();
 
         var act = () => period.Update("new name", ValidStart, ValidEnd);
@@ -263,7 +263,7 @@ public class AllocationPeriodTests
     [Fact]
     public void FullLifecycle_DraftOpenAllocatingClosed_TransitionsCleanly()
     {
-        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd);
+        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd, ValidStart.AddDays(14), 3);
         period.Status.Should().Be(AllocationPeriodStatus.Draft);
 
         period.Activate();
@@ -276,11 +276,54 @@ public class AllocationPeriodTests
         period.Status.Should().Be(AllocationPeriodStatus.Closed);
     }
 
+    // ─── Round scheduling ────────────────────────────────────────────────
+
+    [Fact]
+    public void Create_WithValidRoundScheduling_SetsFields()
+    {
+        var start = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
+        var end = new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc);
+        var round1 = new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc);
+        var period = AllocationPeriod.Create("2026-2027", start, end, round1, responseWindowDays: 3);
+        period.Round1Date.Should().Be(round1);
+        period.ResponseWindowDays.Should().Be(3);
+    }
+
+    [Fact]
+    public void Create_WithRound1DateBeforeStartDate_Throws()
+    {
+        var start = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
+        var end = new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc);
+        var round1 = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc);
+        var act = () => AllocationPeriod.Create("test", start, end, round1, 3);
+        act.Should().Throw<DomainException>().WithMessage("*round 1 date*");
+    }
+
+    [Fact]
+    public void Create_WithRound1DateAfterEndDate_Throws()
+    {
+        var start = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
+        var end = new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc);
+        var round1 = new DateTime(2027, 8, 1, 0, 0, 0, DateTimeKind.Utc);
+        var act = () => AllocationPeriod.Create("test", start, end, round1, 3);
+        act.Should().Throw<DomainException>().WithMessage("*round 1 date*");
+    }
+
+    [Fact]
+    public void Create_WithResponseWindowBelow1_Throws()
+    {
+        var start = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
+        var end = new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc);
+        var round1 = new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc);
+        var act = () => AllocationPeriod.Create("test", start, end, round1, 0);
+        act.Should().Throw<DomainException>().WithMessage("*response window*");
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────
 
     private static AllocationPeriod InAllocatingState()
     {
-        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd);
+        var period = AllocationPeriod.Create(ValidName, ValidStart, ValidEnd, ValidStart.AddDays(14), 3);
         period.Activate();
         period.StartAllocating();
         return period;

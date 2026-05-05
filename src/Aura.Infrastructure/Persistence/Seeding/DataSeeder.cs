@@ -31,10 +31,13 @@ public class DataSeeder(AuraDbContext context)
         var faculties = BuildFaculties();
         context.Faculties.AddRange(faculties);
 
+        var startDate = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
         var period = AllocationPeriod.Create(
             "2026-2027",
-            new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc));
+            startDate,
+            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            startDate.AddDays(14),
+            3);
         context.AllocationPeriods.Add(period);
 
         var allocations = DistributeRoomsRoundRobin(faculties, allRooms, period.Id);

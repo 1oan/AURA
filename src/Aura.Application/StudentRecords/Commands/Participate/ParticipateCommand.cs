@@ -15,7 +15,8 @@ public class ParticipateCommandHandler(
     ICurrentUserService currentUserService,
     IUserRepository userRepository,
     IAllocationPeriodRepository allocationPeriodRepository,
-    IStudentRecordRepository studentRecordRepository) : IRequestHandler<ParticipateCommand, ParticipateResult>
+    IStudentRecordRepository studentRecordRepository,
+    IDormAllocationRepository dormAllocationRepository) : IRequestHandler<ParticipateCommand, ParticipateResult>
 {
     public async Task<ParticipateResult> Handle(ParticipateCommand command, CancellationToken cancellationToken)
     {
@@ -40,8 +41,11 @@ public class ParticipateCommandHandler(
         var period = await allocationPeriodRepository.FindByIdAsync(command.AllocationPeriodId, cancellationToken)
             ?? throw new NotFoundException("Allocation period not found.");
 
-        if (period.Status != AllocationPeriodStatus.Open)
-            throw new DomainException("Allocation period is not open for participation.");
+        if (period.Status != AllocationPeriodStatus.Open && period.Status != AllocationPeriodStatus.Allocating)
+            throw new DomainException("Allocation period is not accepting participants.");
+
+        if (await dormAllocationRepository.HasTerminalForUserAndPeriodAsync(user.Id, command.AllocationPeriodId, cancellationToken))
+            throw new DomainException("You are no longer eligible to participate in this period.");
 
         var studentRecord = await studentRecordRepository.FindByMatriculationCodeAndPeriodAsync(
             matriculationCode, command.AllocationPeriodId, cancellationToken)

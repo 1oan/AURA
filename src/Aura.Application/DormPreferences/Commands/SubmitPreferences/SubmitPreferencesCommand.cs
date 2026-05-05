@@ -14,7 +14,8 @@ public class SubmitPreferencesCommandHandler(
     IUserRepository userRepository,
     IAllocationPeriodRepository allocationPeriodRepository,
     IFacultyRoomAllocationRepository facultyRoomAllocationRepository,
-    IDormPreferenceRepository dormPreferenceRepository) : IRequestHandler<SubmitPreferencesCommand>
+    IDormPreferenceRepository dormPreferenceRepository,
+    IDormAllocationRepository dormAllocationRepository) : IRequestHandler<SubmitPreferencesCommand>
 {
     public async Task Handle(SubmitPreferencesCommand command, CancellationToken cancellationToken)
     {
@@ -28,8 +29,11 @@ public class SubmitPreferencesCommandHandler(
         var period = await allocationPeriodRepository.FindByIdAsync(command.AllocationPeriodId, cancellationToken)
             ?? throw new NotFoundException("Allocation period not found.");
 
-        if (period.Status != AllocationPeriodStatus.Open)
-            throw new DomainException("Preferences can only be submitted when the allocation period is open.");
+        if (period.Status != AllocationPeriodStatus.Open && period.Status != AllocationPeriodStatus.Allocating)
+            throw new DomainException("Preferences can only be submitted while the allocation period is open or allocating.");
+
+        if (await dormAllocationRepository.HasTerminalForUserAndPeriodAsync(userId, command.AllocationPeriodId, cancellationToken))
+            throw new DomainException("You are no longer eligible to submit preferences for this period.");
 
         // Get available dormitories for this student
         var allocations = await facultyRoomAllocationRepository

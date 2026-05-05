@@ -39,7 +39,9 @@ public class UploadCsvCommandHandlerTests
         return AllocationPeriod.Create(
             "2026-2027",
             new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc));
+            new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc),
+            3);
     }
 
     private static Stream CsvStream(string content) =>

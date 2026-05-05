@@ -10,10 +10,12 @@ public class AllocationPeriod
     public DateTime StartDate { get; private set; }
     public DateTime EndDate { get; private set; }
     public AllocationPeriodStatus Status { get; private set; }
+    public DateTime Round1Date { get; private set; }
+    public int ResponseWindowDays { get; private set; }
 
     private AllocationPeriod() { }
 
-    public static AllocationPeriod Create(string name, DateTime startDate, DateTime endDate)
+    public static AllocationPeriod Create(string name, DateTime startDate, DateTime endDate, DateTime round1Date, int responseWindowDays)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new DomainException("Allocation period name is required.");
@@ -21,6 +23,10 @@ public class AllocationPeriod
             throw new DomainException("Allocation period name must not exceed 200 characters.");
         if (endDate <= startDate)
             throw new DomainException("End date must be after start date.");
+        if (round1Date < startDate || round1Date > endDate)
+            throw new DomainException("Round 1 date must fall within the allocation period.");
+        if (responseWindowDays < 1)
+            throw new DomainException("Response window must be at least 1 day.");
 
         return new AllocationPeriod
         {
@@ -28,7 +34,9 @@ public class AllocationPeriod
             Name = name.Trim(),
             StartDate = DateTime.SpecifyKind(startDate, DateTimeKind.Utc),
             EndDate = DateTime.SpecifyKind(endDate, DateTimeKind.Utc),
-            Status = AllocationPeriodStatus.Draft
+            Status = AllocationPeriodStatus.Draft,
+            Round1Date = DateTime.SpecifyKind(round1Date, DateTimeKind.Utc),
+            ResponseWindowDays = responseWindowDays,
         };
     }
 

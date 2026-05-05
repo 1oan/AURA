@@ -1,5 +1,6 @@
 using Aura.Application.Common.Interfaces;
 using Aura.Domain.Entities;
+using Aura.Domain.Enums;
 using Aura.Domain.Exceptions;
 using MediatR;
 
@@ -30,6 +31,9 @@ public class AssignRoomsCommandHandler : IRequestHandler<AssignRoomsCommand, int
 
         var period = await _allocationPeriodRepository.FindByIdAsync(request.AllocationPeriodId, cancellationToken)
             ?? throw new NotFoundException($"Allocation period '{request.AllocationPeriodId}' not found.");
+
+        if (period.Status == AllocationPeriodStatus.Allocating || period.Status == AllocationPeriodStatus.Closed)
+            throw new DomainException("Faculty room allocations are frozen once the period leaves Draft/Open state.");
 
         foreach (var roomId in request.RoomIds)
         {

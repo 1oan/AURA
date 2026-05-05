@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Aura.Application.AllocationPeriods.Commands.CreateAllocationPeriod;
 
-public record CreateAllocationPeriodCommand(string Name, DateTime StartDate, DateTime EndDate) : IRequest<AllocationPeriodDto>;
+public record CreateAllocationPeriodCommand(string Name, DateTime StartDate, DateTime EndDate, DateTime Round1Date, int ResponseWindowDays) : IRequest<AllocationPeriodDto>;
 
 public class CreateAllocationPeriodCommandHandler : IRequestHandler<CreateAllocationPeriodCommand, AllocationPeriodDto>
 {
@@ -18,7 +18,7 @@ public class CreateAllocationPeriodCommandHandler : IRequestHandler<CreateAlloca
 
     public async Task<AllocationPeriodDto> Handle(CreateAllocationPeriodCommand request, CancellationToken cancellationToken)
     {
-        var period = AllocationPeriod.Create(request.Name, request.StartDate, request.EndDate);
+        var period = AllocationPeriod.Create(request.Name, request.StartDate, request.EndDate, request.Round1Date, request.ResponseWindowDays);
 
         await _allocationPeriodRepository.AddAsync(period, cancellationToken);
         await _allocationPeriodRepository.SaveChangesAsync(cancellationToken);

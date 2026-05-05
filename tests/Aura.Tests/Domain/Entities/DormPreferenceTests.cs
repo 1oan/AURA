@@ -67,4 +67,13 @@ public class DormPreferenceTests
 
         preference.Rank.Should().Be(rank);
     }
+
+    [Fact]
+    public void Create_SetsCreatedAtToCurrentUtc()
+    {
+        var before = DateTime.UtcNow;
+        var preference = DormPreference.Create(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1);
+        var after = DateTime.UtcNow;
+        preference.CreatedAt.Should().BeOnOrAfter(before).And.BeOnOrBefore(after);
+    }
 }
