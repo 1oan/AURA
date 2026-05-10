@@ -1,7 +1,10 @@
 using Aura.Application.Common.Events;
 using Aura.Application.Common.Interfaces;
+using Aura.Application.DormAllocations.Commands.AcceptAllocation;
+using Aura.Application.DormAllocations.Commands.DeclineAllocation;
 using Aura.Application.DormAllocations.Commands.RunAllocationRound;
 using Aura.Application.DormAllocations.Events;
+using Aura.Application.UpgradeRequests.Commands.SubmitUpgradeRequest;
 using Aura.Domain.Entities;
 using Aura.Domain.Enums;
 using Aura.Infrastructure.Persistence;
@@ -47,11 +50,14 @@ public class AllocationIntegrationTests : IAsyncLifetime
         services.AddScoped<IRoomRepository, RoomRepository>();
         services.AddScoped<IFacultyRoomAllocationRepository, FacultyRoomAllocationRepository>();
         services.AddScoped<ICurrentUserService>(_ => Substitute.For<ICurrentUserService>());
+        services.AddScoped<IEmailService>(_ => Substitute.For<IEmailService>());
+        services.AddScoped<Aura.Application.UpgradeRequests.Services.IUpgradeFulfillmentService,
+            Aura.Application.UpgradeRequests.Services.UpgradeFulfillmentService>();
 
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssemblyContaining<RunAllocationRoundCommand>();
-            // CapacityFreedNotificationHandler is in the same Application assembly — picked up automatically
+            // CapacityFreedNotificationHandler + 4 email handlers are in the same Application assembly — picked up automatically
         });
 
         _sp = services.BuildServiceProvider();
@@ -198,6 +204,139 @@ public class AllocationIntegrationTests : IAsyncLifetime
             u2Allocs[1].Status.Should().Be(AllocationStatus.Accepted);
 
             var upgrade = await ctx.UpgradeRequests.FirstAsync(r => r.UserId == user2Id);
+            upgrade.IsActive.Should().BeFalse();
+        }
+    }
+
+    [Fact]
+    public async Task FullLifecycle_AcceptAndUpgrade_CompletesEndToEnd()
+    {
+        Guid periodId, dormAId, dormBId, user1Id, user2Id;
+
+        await using (var scope = _sp.CreateAsyncScope())
+        {
+            var ctx = scope.ServiceProvider.GetRequiredService<AuraDbContext>();
+
+            var campus = Campus.Create("TestCampus2");
+            var faculty = Faculty.Create("Matematica", "MAT");
+            var dormA = Dormitory.Create("DormA-FL", campus.Id);
+            var dormB = Dormitory.Create("DormB-FL", campus.Id);
+            var roomA = Room.Create("101", dormA.Id, 1, 1, Gender.Male);
+            var roomB = Room.Create("101", dormB.Id, 1, 1, Gender.Male);
+
+            var period = AllocationPeriod.Create("test-fl-period",
+                new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
+                new DateTime(2027, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+                new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc), 3);
+            period.Activate();
+            period.StartAllocating();
+
+            var fra1 = FacultyRoomAllocation.Create(faculty.Id, roomA.Id, period.Id);
+            var fra2 = FacultyRoomAllocation.Create(faculty.Id, roomB.Id, period.Id);
+
+            var user1 = User.Create("fl1@uaic.ro", "h");
+            user1.UpdateProfile("Alpha", "One");
+            user1.AssignToFaculty(faculty.Id);
+            user1.SetGender(Gender.Male);
+            var record1 = StudentRecord.Create("FL001", "Alpha", "One", 9, Gender.Male, faculty.Id, period.Id);
+            record1.LinkToUser(user1.Id);
+
+            var user2 = User.Create("fl2@uaic.ro", "h");
+            user2.UpdateProfile("Beta", "Two");
+            user2.AssignToFaculty(faculty.Id);
+            user2.SetGender(Gender.Male);
+            var record2 = StudentRecord.Create("FL002", "Beta", "Two", 7, Gender.Male, faculty.Id, period.Id);
+            record2.LinkToUser(user2.Id);
+
+            var pref1A = DormPreference.Create(user1.Id, period.Id, dormA.Id, 1);
+            var pref1B = DormPreference.Create(user1.Id, period.Id, dormB.Id, 2);
+            var pref2A = DormPreference.Create(user2.Id, period.Id, dormA.Id, 1);
+            var pref2B = DormPreference.Create(user2.Id, period.Id, dormB.Id, 2);
+
+            ctx.Campuses.Add(campus);
+            ctx.Faculties.Add(faculty);
+            ctx.Dormitories.Add(dormA);
+            ctx.Dormitories.Add(dormB);
+            ctx.Rooms.Add(roomA);
+            ctx.Rooms.Add(roomB);
+            ctx.AllocationPeriods.Add(period);
+            ctx.FacultyRoomAllocations.Add(fra1);
+            ctx.FacultyRoomAllocations.Add(fra2);
+            ctx.Users.Add(user1);
+            ctx.Users.Add(user2);
+            ctx.StudentRecords.Add(record1);
+            ctx.StudentRecords.Add(record2);
+            ctx.DormPreferences.AddRange([pref1A, pref1B, pref2A, pref2B]);
+
+            await ctx.SaveChangesAsync();
+
+            periodId = period.Id;
+            dormAId = dormA.Id;
+            dormBId = dormB.Id;
+            user1Id = user1.Id;
+            user2Id = user2.Id;
+        }
+
+        await using (var scope = _sp.CreateAsyncScope())
+        {
+            var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+            await sender.Send(new RunAllocationRoundCommand(periodId, 1));
+        }
+
+        Guid user1AllocId, user2AllocId;
+        await using (var scope = _sp.CreateAsyncScope())
+        {
+            var ctx = scope.ServiceProvider.GetRequiredService<AuraDbContext>();
+            var allocs = await ctx.DormAllocations
+                .Where(a => a.AllocationPeriodId == periodId)
+                .ToListAsync();
+            user1AllocId = allocs.Single(a => a.UserId == user1Id).Id;
+            user2AllocId = allocs.Single(a => a.UserId == user2Id).Id;
+
+            var current = scope.ServiceProvider.GetRequiredService<ICurrentUserService>();
+            current.GetCurrentUserId().Returns(user1Id);
+
+            var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+            await sender.Send(new AcceptAllocationCommand(user1AllocId));
+        }
+
+        await using (var scope = _sp.CreateAsyncScope())
+        {
+            var current = scope.ServiceProvider.GetRequiredService<ICurrentUserService>();
+            current.GetCurrentUserId().Returns(user1Id);
+
+            var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+            await sender.Send(new SubmitUpgradeRequestCommand(periodId, [dormBId]));
+        }
+
+        await using (var scope = _sp.CreateAsyncScope())
+        {
+            var current = scope.ServiceProvider.GetRequiredService<ICurrentUserService>();
+            current.GetCurrentUserId().Returns(user2Id);
+
+            var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+            await sender.Send(new DeclineAllocationCommand(user2AllocId));
+        }
+
+        await using (var scope = _sp.CreateAsyncScope())
+        {
+            var ctx = scope.ServiceProvider.GetRequiredService<AuraDbContext>();
+
+            var u1Allocs = await ctx.DormAllocations
+                .Where(a => a.UserId == user1Id && a.AllocationPeriodId == periodId)
+                .OrderBy(a => a.AllocatedAt)
+                .ToListAsync();
+            u1Allocs.Should().HaveCount(2);
+            u1Allocs[0].DormitoryId.Should().Be(dormAId);
+            u1Allocs[0].Status.Should().Be(AllocationStatus.Replaced);
+            u1Allocs[1].DormitoryId.Should().Be(dormBId);
+            u1Allocs[1].Status.Should().Be(AllocationStatus.Accepted);
+
+            var u2Alloc = await ctx.DormAllocations
+                .SingleAsync(a => a.UserId == user2Id && a.AllocationPeriodId == periodId);
+            u2Alloc.Status.Should().Be(AllocationStatus.Declined);
+
+            var upgrade = await ctx.UpgradeRequests.SingleAsync(r => r.UserId == user1Id);
             upgrade.IsActive.Should().BeFalse();
         }
     }

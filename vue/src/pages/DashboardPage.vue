@@ -12,6 +12,7 @@ import {
   CircleSlash2,
   GraduationCap,
   Home,
+  Loader2,
 } from 'lucide-vue-next'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -27,9 +28,10 @@ import { getAllocationPeriods } from '@/api/allocationPeriods'
 import type { AllocationPeriodDto } from '@/api/allocationPeriods'
 import { getMyEligibility, participate } from '@/api/studentRecords'
 import type { MyEligibilityResult, ParticipateResult } from '@/api/studentRecords'
-import { getMyAllocation } from '@/api/dormAllocations'
+import { getMyAllocation, acceptAllocation, declineAllocation } from '@/api/dormAllocations'
 import type { DormAllocationDto } from '@/api/dormAllocations'
 import { ApiError } from '@/api/client'
+import DeclineAllocationDialog from '@/components/features/DeclineAllocationDialog.vue'
 
 const authStore = useAuthStore()
 const isAdmin = computed(() => ['SuperAdmin', 'FacultyAdmin'].includes(authStore.user?.role ?? ''))
@@ -51,6 +53,9 @@ const participating = ref(false)
 const participateError = ref('')
 const activePeriodForStudent = ref<AllocationPeriodDto | null>(null)
 const myAllocation = ref<DormAllocationDto | null | undefined>(undefined)
+const declineDialogOpen = ref(false)
+const declineLoading = ref(false)
+const acceptLoading = ref(false)
 
 async function loadDashboard() {
   if (isAdmin.value) {
@@ -84,6 +89,49 @@ async function loadDashboard() {
     } finally {
       loading.value = false
     }
+  }
+}
+
+async function handleAccept() {
+  if (!myAllocation.value) return
+  acceptLoading.value = true
+  try {
+    await acceptAllocation(myAllocation.value.id)
+    toast.success('Allocation accepted.')
+    if (activePeriodForStudent.value) {
+      myAllocation.value = await getMyAllocation(activePeriodForStudent.value.id)
+    }
+  } catch (e) {
+    if (e instanceof ApiError) {
+      const data = e.data as { detail?: string }
+      toast.error(data.detail ?? 'Could not accept the allocation.')
+    } else {
+      toast.error('Could not accept the allocation.')
+    }
+  } finally {
+    acceptLoading.value = false
+  }
+}
+
+async function handleDeclineConfirm() {
+  if (!myAllocation.value) return
+  declineLoading.value = true
+  try {
+    await declineAllocation(myAllocation.value.id)
+    toast.success("Allocation declined. You are no longer in this period's pool.")
+    declineDialogOpen.value = false
+    if (activePeriodForStudent.value) {
+      myAllocation.value = await getMyAllocation(activePeriodForStudent.value.id)
+    }
+  } catch (e) {
+    if (e instanceof ApiError) {
+      const data = e.data as { detail?: string }
+      toast.error(data.detail ?? 'Could not decline the allocation.')
+    } else {
+      toast.error('Could not decline the allocation.')
+    }
+  } finally {
+    declineLoading.value = false
   }
 }
 
@@ -175,14 +223,21 @@ const participationIconClass = computed(() =>
   isParticipationTerminal.value ? 'size-5 text-muted-foreground' : 'size-5 text-emerald-600'
 )
 
+function placementLocation(dormName: string, campusName: string) {
+  return dormName === campusName
+    ? dormName
+    : `${dormName} in ${campusName}`
+}
+
 const allocationCopy = computed(() => {
   const a = myAllocation.value
   if (!a) return ''
+  const where = placementLocation(a.dormitoryName, a.campusName)
   switch (a.status) {
     case 'Pending':
-      return `You've been placed in ${a.dormitoryName} in ${a.campusName}. Awaiting your response.`
+      return `You've been placed in ${where}. Respond before the window closes.`
     case 'Accepted':
-      return `You've accepted your placement in ${a.dormitoryName} in ${a.campusName}.`
+      return `You've accepted your placement in ${where}.`
     case 'Declined':
       return `You declined your allocation in ${a.dormitoryName}. You are no longer in this period's pool.`
     case 'Expired':
@@ -192,6 +247,15 @@ const allocationCopy = computed(() => {
     default:
       return `Your allocation status: ${a.status}.`
   }
+})
+
+const myAllocationCardClass = computed(() => {
+  const status = myAllocation.value?.status
+  if (status === 'Pending') return 'border-amber-500/30 bg-amber-500/5'
+  if (status === 'Accepted') return 'border-emerald-500/30 bg-emerald-500/5'
+  if (status === 'Declined' || status === 'Expired' || status === 'Replaced')
+    return 'border-muted-foreground/20 bg-muted/30'
+  return ''
 })
 </script>
 
@@ -212,62 +276,82 @@ const allocationCopy = computed(() => {
       </div>
 
       <template v-else-if="isAdmin && stats">
-        <!-- KPI Cards -->
-        <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <Card class="cursor-pointer transition-colors hover:bg-muted/30" @click="$router.push('/campuses')">
-            <CardContent class="flex items-center gap-3 p-3">
-              <div class="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
+        <!-- KPI strip: divide-x cells in a single bordered surface (no per-card boxes) -->
+        <section
+          class="overflow-hidden rounded-lg border bg-card"
+          aria-label="Allocation overview"
+        >
+          <div class="grid grid-cols-2 divide-y divide-x lg:grid-cols-4 lg:divide-y-0">
+            <RouterLink
+              to="/campuses"
+              class="flex items-center gap-3 p-3 transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none"
+            >
+              <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
                 <Building2 class="size-4" />
-              </div>
-              <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Campuses</p>
-                <p class="text-xl font-semibold font-mono tabular-nums leading-tight">{{ stats.campusCount }}</p>
-              </div>
-            </CardContent>
-          </Card>
+              </span>
+              <span class="block min-w-0">
+                <span class="block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Campuses</span>
+                <span class="mt-0.5 block text-xl font-semibold font-mono tabular-nums leading-none">{{ stats.campusCount }}</span>
+              </span>
+            </RouterLink>
 
-          <Card class="cursor-pointer transition-colors hover:bg-muted/30" @click="$router.push('/campuses')">
-            <CardContent class="flex items-center gap-3 p-3">
-              <div class="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
+            <RouterLink
+              to="/campuses"
+              class="flex items-center gap-3 p-3 transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none"
+            >
+              <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
                 <DoorOpen class="size-4" />
-              </div>
-              <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Dormitories</p>
-                <p class="text-xl font-semibold font-mono tabular-nums leading-tight">{{ stats.dormitoryCount }}</p>
-              </div>
-            </CardContent>
-          </Card>
+              </span>
+              <span class="block min-w-0">
+                <span class="block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Dormitories</span>
+                <span class="mt-0.5 block text-xl font-semibold font-mono tabular-nums leading-none">{{ stats.dormitoryCount }}</span>
+              </span>
+            </RouterLink>
 
-          <Card class="cursor-pointer transition-colors hover:bg-muted/30" @click="$router.push('/campuses')">
-            <CardContent class="flex items-center gap-3 p-3">
-              <div class="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
+            <RouterLink
+              to="/campuses"
+              class="flex items-center gap-3 p-3 transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none"
+            >
+              <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
                 <BedDouble class="size-4" />
-              </div>
-              <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Rooms</p>
-                <p class="text-xl font-semibold font-mono tabular-nums leading-tight">{{ stats.totalRooms }}</p>
-                <p class="text-[10px] text-muted-foreground font-mono">{{ stats.totalCapacity }} beds</p>
-              </div>
-            </CardContent>
-          </Card>
+              </span>
+              <span class="block min-w-0">
+                <span class="block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Rooms</span>
+                <span class="mt-0.5 flex items-baseline gap-1.5">
+                  <span class="text-xl font-semibold font-mono tabular-nums leading-none">{{ stats.totalRooms }}</span>
+                  <span class="text-[10px] font-mono text-muted-foreground">{{ stats.totalCapacity }} beds</span>
+                </span>
+              </span>
+            </RouterLink>
 
-          <Card class="cursor-pointer transition-colors hover:bg-muted/30" @click="$router.push('/allocation')">
-            <CardContent class="flex items-center gap-3 p-3">
-              <div class="flex size-8 shrink-0 items-center justify-center rounded-md" :class="stats.activePeriod ? 'bg-emerald-500/10 text-emerald-600' : 'bg-muted text-muted-foreground'">
+            <RouterLink
+              to="/allocation"
+              class="flex items-center gap-3 p-3 transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none"
+            >
+              <span
+                class="flex size-8 shrink-0 items-center justify-center rounded-md"
+                :class="stats.activePeriod ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-muted text-muted-foreground'"
+              >
                 <CalendarClock class="size-4" />
-              </div>
-              <div>
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Period</p>
-                <p class="text-sm font-medium leading-tight">
-                  {{ stats.activePeriod?.name ?? 'None active' }}
-                </p>
-                <Badge v-if="stats.activePeriod" :variant="statusVariant(stats.activePeriod.status)" class="mt-0.5 h-4 px-1.5 text-[9px]">
-                  {{ stats.activePeriod.status }}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </span>
+              <span class="block min-w-0">
+                <span class="block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Period</span>
+                <span class="mt-0.5 flex items-center gap-1.5 truncate">
+                  <span class="truncate text-sm font-medium leading-none">
+                    {{ stats.activePeriod?.name ?? 'None active' }}
+                  </span>
+                  <Badge
+                    v-if="stats.activePeriod"
+                    :variant="statusVariant(stats.activePeriod.status)"
+                    class="h-4 px-1.5 text-[9px]"
+                  >
+                    {{ stats.activePeriod.status }}
+                  </Badge>
+                </span>
+              </span>
+            </RouterLink>
+          </div>
+        </section>
 
         <!-- Middle row: Allocations + Timeline -->
         <div class="grid gap-2 lg:grid-cols-7">
@@ -414,7 +498,7 @@ const allocationCopy = computed(() => {
           </Card>
 
           <!-- My Dormitory Allocation -->
-          <Card>
+          <Card :class="['transition-colors duration-200', myAllocationCardClass]">
             <CardHeader class="p-3 pb-2">
               <CardTitle class="flex items-center gap-2 text-sm font-medium">
                 <Home class="size-4 text-primary" />
@@ -445,6 +529,29 @@ const allocationCopy = computed(() => {
                       {{ new Date(myAllocation.allocatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
                     </p>
                   </div>
+                </div>
+                <div
+                  v-if="myAllocation.status === 'Pending'"
+                  class="mt-3 flex flex-wrap items-center gap-2"
+                >
+                  <Button
+                    size="sm"
+                    class="h-7 text-xs transition-transform active:scale-[0.98]"
+                    :disabled="acceptLoading || declineLoading"
+                    @click="handleAccept"
+                  >
+                    <Loader2 v-if="acceptLoading" class="mr-1.5 size-3 animate-spin" />
+                    Accept
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="h-7 text-xs transition-transform active:scale-[0.98]"
+                    :disabled="acceptLoading || declineLoading"
+                    @click="declineDialogOpen = true"
+                  >
+                    Decline
+                  </Button>
                 </div>
                 <p
                   v-if="myAllocation.status === 'Declined' || myAllocation.status === 'Expired'"
@@ -506,5 +613,13 @@ const allocationCopy = computed(() => {
         </template>
       </template>
     </div>
+
+    <DeclineAllocationDialog
+      v-if="myAllocation"
+      v-model:open="declineDialogOpen"
+      :dormitory-name="myAllocation.dormitoryName"
+      :loading="declineLoading"
+      @confirm="handleDeclineConfirm"
+    />
   </AppLayout>
 </template>

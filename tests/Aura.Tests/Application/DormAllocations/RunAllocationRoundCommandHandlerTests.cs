@@ -1,6 +1,7 @@
 using Aura.Application.Common.Events;
 using Aura.Application.Common.Interfaces;
 using Aura.Application.DormAllocations.Commands.RunAllocationRound;
+using Aura.Application.UpgradeRequests.Services;
 using Aura.Domain.Entities;
 using Aura.Domain.Enums;
 using Aura.Domain.Exceptions;
@@ -18,12 +19,13 @@ public class RunAllocationRoundCommandHandlerTests
     private readonly IDormPreferenceRepository _preferences = Substitute.For<IDormPreferenceRepository>();
     private readonly IStudentRecordRepository _records = Substitute.For<IStudentRecordRepository>();
     private readonly IUserRepository _users = Substitute.For<IUserRepository>();
+    private readonly IUpgradeFulfillmentService _upgradeFulfillment = Substitute.For<IUpgradeFulfillmentService>();
     private readonly IPublisher _publisher = Substitute.For<IPublisher>();
 
     private readonly Guid _periodId = Guid.NewGuid();
 
     private RunAllocationRoundCommandHandler Create() =>
-        new(_periods, _allocations, _preferences, _records, _users, _publisher);
+        new(_periods, _allocations, _preferences, _records, _users, _upgradeFulfillment, _publisher);
 
     private AllocationPeriod AllocatingPeriod()
     {

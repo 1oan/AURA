@@ -9,6 +9,11 @@ public class DormitoryRepository(AuraDbContext context) : IDormitoryRepository
     public async Task<Dormitory?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => await context.Dormitories.FindAsync([id], cancellationToken);
 
+    public async Task<Dormitory?> FindByIdWithCampusAsync(Guid id, CancellationToken cancellationToken = default)
+        => await context.Dormitories
+            .Include(d => d.Campus)
+            .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+
     public async Task<Dormitory?> FindByIdWithRoomsAsync(Guid id, CancellationToken cancellationToken = default)
         => await context.Dormitories
             .Include(d => d.Rooms)

@@ -1,5 +1,6 @@
 using Aura.Application.Common.Events;
 using Aura.Application.Common.Interfaces;
+using Aura.Application.UpgradeRequests.Services;
 using Aura.Domain.Entities;
 using Aura.Domain.Enums;
 using Aura.Domain.Exceptions;
@@ -15,6 +16,7 @@ public class RunAllocationRoundCommandHandler(
     IDormPreferenceRepository dormPreferenceRepository,
     IStudentRecordRepository studentRecordRepository,
     IUserRepository userRepository,
+    IUpgradeFulfillmentService upgradeFulfillmentService,
     IPublisher publisher) : IRequestHandler<RunAllocationRoundCommand>
 {
     public async Task Handle(RunAllocationRoundCommand request, CancellationToken cancellationToken)
@@ -95,5 +97,10 @@ public class RunAllocationRoundCommandHandler(
                 break;
             }
         }
+
+        // After new students are placed, sweep active upgrade requests against current capacity.
+        // This catches the "never-filled capacity" case the cascade can't see (cascade only fires
+        // on freed-capacity events; unfilled spots from undersized pools never produce one).
+        await upgradeFulfillmentService.SweepActiveTargetsAsync(request.AllocationPeriodId, cancellationToken);
     }
 }

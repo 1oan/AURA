@@ -1,3 +1,4 @@
+using System.Net;
 using Aura.Application.Common.Interfaces;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Hosting;
@@ -38,4 +39,79 @@ public class SmtpEmailService(
         await client.SendAsync(message, cancellationToken);
         await client.DisconnectAsync(true, cancellationToken);
     }
+
+    public Task SendAllocationPlacedAsync(
+        string toEmail, string firstName, string dormitoryName, string campusName,
+        DateTime respondByUtc, CancellationToken cancellationToken)
+    {
+        var subject = $"Your dorm allocation — {dormitoryName}";
+        var body = BuildHtml(
+            firstName,
+            $@"<p>You have been placed in <strong>{WebUtility.HtmlEncode(dormitoryName)}</strong>
+                  in <strong>{WebUtility.HtmlEncode(campusName)}</strong>.</p>
+               <p>Please respond by <strong>{respondByUtc:yyyy-MM-dd HH:mm} UTC</strong>
+                  or your placement will expire and you will be removed from the period.</p>
+               <p>Open the dashboard to accept or decline:
+                  <a href=""http://localhost:5173/"">View my allocation</a></p>");
+
+        return SendEmailAsync(toEmail, subject, body, cancellationToken);
+    }
+
+    public Task SendAllocationReminderAsync(
+        string toEmail, string firstName, string dormitoryName, string campusName,
+        DateTime respondByUtc, CancellationToken cancellationToken)
+    {
+        var subject = "Reminder: respond to your dorm allocation";
+        var body = BuildHtml(
+            firstName,
+            $@"<p>You have less than 24 hours to respond to your placement in
+                  <strong>{WebUtility.HtmlEncode(dormitoryName)}</strong>
+                  ({WebUtility.HtmlEncode(campusName)}).</p>
+               <p>Pending placements expire on <strong>{respondByUtc:yyyy-MM-dd HH:mm} UTC</strong>.</p>
+               <p>Open the dashboard to accept or decline:
+                  <a href=""http://localhost:5173/"">View my allocation</a></p>");
+
+        return SendEmailAsync(toEmail, subject, body, cancellationToken);
+    }
+
+    public Task SendAllocationExpiredAsync(
+        string toEmail, string firstName, string dormitoryName,
+        CancellationToken cancellationToken)
+    {
+        var subject = "Your dorm allocation expired";
+        var body = BuildHtml(
+            firstName,
+            $@"<p>Your placement in <strong>{WebUtility.HtmlEncode(dormitoryName)}</strong>
+                  expired because the response window closed.</p>
+               <p>You are no longer in this period's pool. Contact your faculty admin
+                  if this is unexpected.</p>");
+
+        return SendEmailAsync(toEmail, subject, body, cancellationToken);
+    }
+
+    public Task SendAllocationUpgradedAsync(
+        string toEmail, string firstName, string oldDormName, string newDormName, string campusName,
+        CancellationToken cancellationToken)
+    {
+        var subject = $"Your upgrade succeeded — {newDormName}";
+        var body = BuildHtml(
+            firstName,
+            $@"<p>Your upgrade request was fulfilled. You are now placed in
+                  <strong>{WebUtility.HtmlEncode(newDormName)}</strong>
+                  in <strong>{WebUtility.HtmlEncode(campusName)}</strong>
+                  instead of <strong>{WebUtility.HtmlEncode(oldDormName)}</strong>.</p>
+               <p>Open the dashboard to view your placement:
+                  <a href=""http://localhost:5173/"">View my allocation</a></p>");
+
+        return SendEmailAsync(toEmail, subject, body, cancellationToken);
+    }
+
+    private static string BuildHtml(string firstName, string innerHtml) => $@"
+<html><body style=""font-family: Arial, sans-serif; color: #1a1a1a;"">
+  <h2 style=""color: #1a1a1a;"">AURA</h2>
+  <p>Hi {WebUtility.HtmlEncode(firstName)},</p>
+  {innerHtml}
+  <p style=""color: #666; font-size: 12px;"">This is an automated message from AURA.
+     Contact your faculty admin if you have questions.</p>
+</body></html>";
 }

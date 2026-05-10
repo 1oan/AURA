@@ -127,6 +127,23 @@ public class DormAllocationRepository(AuraDbContext context) : IDormAllocationRe
             .ToList();
     }
 
+    public async Task<List<DormAllocation>> GetReminderDueAsync(DateTime now, CancellationToken cancellationToken = default)
+    {
+        // Pull all Pending records (without an existing reminder) into memory to filter by
+        // AllocatedAt + ResponseWindowDays/2 <= now. EF/Npgsql cannot translate DateTime.AddDays
+        // with a per-row int column in SQL, but the Pending set is small (bounded by active rounds).
+        var candidates = await context.DormAllocations
+            .Include(a => a.AllocationPeriod)
+            .Where(a => a.Status == AllocationStatus.Pending)
+            .Where(a => a.ReminderSentAt == null)
+            .ToListAsync(cancellationToken);
+
+        return candidates
+            .Where(a => a.AllocationPeriod != null
+                && a.AllocatedAt.AddDays(a.AllocationPeriod.ResponseWindowDays / 2) <= now)
+            .ToList();
+    }
+
     public async Task<List<DormAllocation>> GetPendingFromPriorRoundsAsync(Guid allocationPeriodId, int currentRound, CancellationToken cancellationToken = default)
     {
         return await context.DormAllocations

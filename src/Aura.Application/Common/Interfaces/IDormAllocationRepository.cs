@@ -41,6 +41,12 @@ public interface IDormAllocationRepository
     Task<List<DormAllocation>> GetExpirablePendingAsync(DateTime now, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Loads all Pending allocations across periods where AllocatedAt + ResponseWindowDays/2 days &lt;= now AND ReminderSentAt is null.
+    /// Used by the time-based reminder worker to nudge students who have not yet responded by the halfway point of their response window.
+    /// </summary>
+    Task<List<DormAllocation>> GetReminderDueAsync(DateTime now, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Loads all Pending allocations for a specific period whose Round is strictly less than the given round.
     /// Used by the admin "force-advance" path to collapse the response window.
     /// </summary>

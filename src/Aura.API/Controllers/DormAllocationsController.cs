@@ -1,4 +1,6 @@
+using Aura.Application.DormAllocations.Commands.AcceptAllocation;
 using Aura.Application.DormAllocations.Commands.AdvanceRound;
+using Aura.Application.DormAllocations.Commands.DeclineAllocation;
 using Aura.Application.DormAllocations.Queries.GetAllocationsForPeriod;
 using Aura.Application.DormAllocations.Queries.GetMyAllocation;
 using MediatR;
@@ -32,6 +34,20 @@ public class DormAllocationsController(ISender sender) : ControllerBase
     public async Task<IActionResult> AdvanceRound(Guid periodId)
     {
         await sender.Send(new AdvanceRoundCommand(periodId));
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/accept")]
+    public async Task<IActionResult> Accept(Guid id)
+    {
+        await sender.Send(new AcceptAllocationCommand(id));
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/decline")]
+    public async Task<IActionResult> Decline(Guid id)
+    {
+        await sender.Send(new DeclineAllocationCommand(id));
         return NoContent();
     }
 }

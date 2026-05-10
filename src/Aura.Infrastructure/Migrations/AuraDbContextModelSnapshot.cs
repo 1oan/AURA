@@ -94,6 +94,9 @@ namespace Aura.Infrastructure.Migrations
                     b.Property<Guid>("DormitoryId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime?>("ReminderSentAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime?>("RespondedAt")
                         .HasColumnType("timestamp with time zone");
 
