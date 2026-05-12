@@ -30,6 +30,8 @@ import { getMyEligibility, participate } from '@/api/studentRecords'
 import type { MyEligibilityResult, ParticipateResult } from '@/api/studentRecords'
 import { getMyAllocation, acceptAllocation, declineAllocation } from '@/api/dormAllocations'
 import type { DormAllocationDto } from '@/api/dormAllocations'
+import { getMyGroup } from '@/api/groups'
+import type { GroupDto } from '@/api/groups'
 import { ApiError } from '@/api/client'
 import DeclineAllocationDialog from '@/components/features/DeclineAllocationDialog.vue'
 import ProfileCompletenessBanner from '@/components/features/profile/ProfileCompletenessBanner.vue'
@@ -54,6 +56,7 @@ const participating = ref(false)
 const participateError = ref('')
 const activePeriodForStudent = ref<AllocationPeriodDto | null>(null)
 const myAllocation = ref<DormAllocationDto | null | undefined>(undefined)
+const myGroup = ref<GroupDto | null>(null)
 const declineDialogOpen = ref(false)
 const declineLoading = ref(false)
 const acceptLoading = ref(false)
@@ -84,6 +87,9 @@ async function loadDashboard() {
         ])
         if (eligResult.status === 'fulfilled') eligibility.value = eligResult.value
         if (allocResult.status === 'fulfilled') myAllocation.value = allocResult.value
+        if (myAllocation.value?.status === 'Accepted') {
+          myGroup.value = await getMyGroup().catch(() => null)
+        }
       }
     } catch {
       // silent
@@ -561,6 +567,25 @@ const myAllocationCardClass = computed(() => {
                 >
                   Contact your faculty admin if this is wrong.
                 </p>
+                <div v-if="myAllocation.status === 'Accepted'" class="mt-3 rounded-md border bg-muted/20 p-3">
+                  <p v-if="!myGroup" class="text-xs text-muted-foreground">
+                    Visit the lobby when you're ready to form a roommate group.
+                  </p>
+                  <p v-else-if="myGroup.status === 'Forming'" class="text-xs text-muted-foreground">
+                    Your group has {{ myGroup.members.length }} of {{ myGroup.roomSizePreference }} members.
+                  </p>
+                  <p v-else-if="myGroup.status === 'Locked'" class="text-xs text-muted-foreground">
+                    You're in a locked group with {{ myGroup.members.filter(m => m.userId !== authStore.user?.id).map(m => m.firstName).join(', ') }}. Room assignment coming next.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="mt-2 h-7 text-xs"
+                    as-child
+                  >
+                    <router-link to="/lobby">Open lobby</router-link>
+                  </Button>
+                </div>
               </template>
 
               <!-- No allocation yet -->

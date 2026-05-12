@@ -271,6 +271,43 @@ namespace Aura.Infrastructure.Migrations
                     b.ToTable("FacultyRoomAllocations");
                 });
 
+            modelBuilder.Entity("Aura.Domain.Entities.GroupInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("InviteeUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("InviterUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
+
+                    b.HasIndex("InviteeUserId");
+
+                    b.HasIndex("GroupId", "InviteeUserId")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 0");
+
+                    b.ToTable("GroupInvitations", (string)null);
+                });
+
             modelBuilder.Entity("Aura.Domain.Entities.Interest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -662,6 +699,49 @@ namespace Aura.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.RoommateGroup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AllocationPeriodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DisbandedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DormitoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ExpiredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("LeaderUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("LockedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RoomSizePreference")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AllocationPeriodId", "Status");
+
+                    b.ToTable("RoommateGroups", (string)null);
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.SpotifySnapshot", b =>
@@ -1112,6 +1192,30 @@ namespace Aura.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Dormitory");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.RoommateGroup", b =>
+                {
+                    b.OwnsMany("Aura.Domain.Entities.GroupMember", "Members", b1 =>
+                        {
+                            b1.Property<Guid>("GroupId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("JoinedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("GroupId", "UserId");
+
+                            b1.ToTable("GroupMembers", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("GroupId");
+                        });
+
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.StudentRecord", b =>

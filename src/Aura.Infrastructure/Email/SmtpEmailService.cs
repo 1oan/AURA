@@ -108,6 +108,44 @@ public class SmtpEmailService(
         return SendEmailAsync(toEmail, subject, body, cancellationToken);
     }
 
+    public Task SendGroupInvitationAsync(
+        string toEmail, string firstName, string inviterFirstName,
+        string dormitoryName, int roomSizePreference, CancellationToken cancellationToken)
+    {
+        var subject = $"{inviterFirstName} invited you to a roommate group";
+        var body = BuildHtml(firstName,
+            $@"<p><strong>{WebUtility.HtmlEncode(inviterFirstName)}</strong> invited you to join a roommate group
+                  in <strong>{WebUtility.HtmlEncode(dormitoryName)}</strong>
+                  ({roomSizePreference}-bed room).</p>
+               <p>Open the lobby to accept or decline:
+                  <a href=""{WebUtility.HtmlEncode(_frontend.BaseUrl)}/lobby"">Open lobby</a></p>");
+        return SendEmailAsync(toEmail, subject, body, cancellationToken);
+    }
+
+    public Task SendGroupLockedAsync(
+        string toEmail, string firstName, string dormitoryName,
+        string[] memberFirstNames, CancellationToken cancellationToken)
+    {
+        var members = string.Join(", ", memberFirstNames);
+        var subject = "Your roommate group is locked";
+        var body = BuildHtml(firstName,
+            $@"<p>Your roommate group in <strong>{WebUtility.HtmlEncode(dormitoryName)}</strong>
+                  is now locked with members: <strong>{WebUtility.HtmlEncode(members)}</strong>.</p>
+               <p>Room assignment will follow shortly.</p>");
+        return SendEmailAsync(toEmail, subject, body, cancellationToken);
+    }
+
+    public Task SendGroupExpiredAsync(
+        string toEmail, string firstName, string dormitoryName, CancellationToken cancellationToken)
+    {
+        var subject = "Your roommate group expired";
+        var body = BuildHtml(firstName,
+            $@"<p>Your roommate group in <strong>{WebUtility.HtmlEncode(dormitoryName)}</strong>
+                  expired because the 48-hour forming window closed without locking.</p>
+               <p>You'll be assigned a room via the random fallback.</p>");
+        return SendEmailAsync(toEmail, subject, body, cancellationToken);
+    }
+
     private static string BuildHtml(string firstName, string innerHtml) => $@"
 <html><body style=""font-family: Arial, sans-serif; color: #1a1a1a;"">
   <h2 style=""color: #1a1a1a;"">AURA</h2>

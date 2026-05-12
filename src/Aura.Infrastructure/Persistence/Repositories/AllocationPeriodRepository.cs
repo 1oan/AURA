@@ -20,6 +20,12 @@ public class AllocationPeriodRepository(AuraDbContext context) : IAllocationPeri
             p => p.Status == AllocationPeriodStatus.Open || p.Status == AllocationPeriodStatus.Allocating,
             cancellationToken);
 
+    public async Task<List<AllocationPeriod>> GetActiveAsync(CancellationToken cancellationToken = default)
+        => await context.AllocationPeriods
+            .Where(p => p.Status == AllocationPeriodStatus.Open || p.Status == AllocationPeriodStatus.Allocating)
+            .OrderByDescending(p => p.StartDate)
+            .ToListAsync(cancellationToken);
+
     public async Task<List<AllocationPeriod>> GetAllocatingDueAtAsync(DateTime now, CancellationToken cancellationToken = default)
         => await context.AllocationPeriods
             .Where(p => p.Status == AllocationPeriodStatus.Allocating

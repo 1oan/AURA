@@ -25,6 +25,8 @@ public sealed class AuraDbContext : DbContext, IApplicationDbContext
     public DbSet<StudentProfile> StudentProfiles => Set<StudentProfile>();
     public DbSet<StudentEmbedding> StudentEmbeddings => Set<StudentEmbedding>();
     public DbSet<SpotifySnapshot> SpotifySnapshots => Set<SpotifySnapshot>();
+    public DbSet<RoommateGroup> RoommateGroups => Set<RoommateGroup>();
+    public DbSet<GroupInvitation> GroupInvitations => Set<GroupInvitation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
