@@ -79,8 +79,8 @@ public class UpgradeFulfillmentServiceTests
             .Returns(new List<DormPreference> { pref });
         _allocations.GetAvailableCapacityAsync(_freedDormId, facultyId, Gender.Male, _periodId, Arg.Any<CancellationToken>())
             .Returns(1);
-        _allocations.FindActiveByUserAndPeriodAsync(userId, _periodId, Arg.Any<CancellationToken>())
-            .Returns(oldAllocation);
+        _allocations.GetActiveByUsersAndPeriodAsync(Arg.Any<IEnumerable<Guid>>(), _periodId, Arg.Any<CancellationToken>())
+            .Returns(new List<DormAllocation> { oldAllocation });
 
         var fulfilled = await Create().TryFulfillForDormAsync(_freedDormId, _periodId, CancellationToken.None);
 
@@ -119,10 +119,8 @@ public class UpgradeFulfillmentServiceTests
             .Returns(new List<DormPreference> { highPref, lowPref });
         _allocations.GetAvailableCapacityAsync(_freedDormId, facultyId, Gender.Male, _periodId, Arg.Any<CancellationToken>())
             .Returns(1);
-        _allocations.FindActiveByUserAndPeriodAsync(highId, _periodId, Arg.Any<CancellationToken>())
-            .Returns(highActive);
-        _allocations.FindActiveByUserAndPeriodAsync(lowId, _periodId, Arg.Any<CancellationToken>())
-            .Returns(lowActive);
+        _allocations.GetActiveByUsersAndPeriodAsync(Arg.Any<IEnumerable<Guid>>(), _periodId, Arg.Any<CancellationToken>())
+            .Returns(new List<DormAllocation> { highActive, lowActive });
 
         await Create().TryFulfillForDormAsync(_freedDormId, _periodId, CancellationToken.None);
 
@@ -156,8 +154,8 @@ public class UpgradeFulfillmentServiceTests
             .Returns(new List<DormPreference> { pref });
         _allocations.GetAvailableCapacityAsync(_freedDormId, facultyId, Gender.Male, _periodId, Arg.Any<CancellationToken>())
             .Returns(1);
-        _allocations.FindActiveByUserAndPeriodAsync(userId, _periodId, Arg.Any<CancellationToken>())
-            .Returns(oldAllocation);
+        _allocations.GetActiveByUsersAndPeriodAsync(Arg.Any<IEnumerable<Guid>>(), _periodId, Arg.Any<CancellationToken>())
+            .Returns(new List<DormAllocation> { oldAllocation });
 
         await Create().TryFulfillForDormAsync(_freedDormId, _periodId, CancellationToken.None);
 
@@ -272,8 +270,9 @@ public class UpgradeFulfillmentServiceTests
             .Returns(new List<DormPreference> { pref });
         _allocations.GetAvailableCapacityAsync(_freedDormId, facultyId, Gender.Male, _periodId, Arg.Any<CancellationToken>())
             .Returns(1);
-        _allocations.FindActiveByUserAndPeriodAsync(userId, _periodId, Arg.Any<CancellationToken>())
-            .Returns((DormAllocation?)null);
+        // No active allocation returned for the candidate user — should be skipped.
+        _allocations.GetActiveByUsersAndPeriodAsync(Arg.Any<IEnumerable<Guid>>(), _periodId, Arg.Any<CancellationToken>())
+            .Returns(new List<DormAllocation>());
 
         await Create().TryFulfillForDormAsync(_freedDormId, _periodId, CancellationToken.None);
 
@@ -316,8 +315,8 @@ public class UpgradeFulfillmentServiceTests
             .Returns(new List<DormPreference> { pref });
         _allocations.GetAvailableCapacityAsync(_freedDormId, facultyId, Gender.Male, _periodId, Arg.Any<CancellationToken>())
             .Returns(1);
-        _allocations.FindActiveByUserAndPeriodAsync(userId, _periodId, Arg.Any<CancellationToken>())
-            .Returns(oldAllocation);
+        _allocations.GetActiveByUsersAndPeriodAsync(Arg.Any<IEnumerable<Guid>>(), _periodId, Arg.Any<CancellationToken>())
+            .Returns(new List<DormAllocation> { oldAllocation });
 
         var count = await Create().SweepActiveTargetsAsync(_periodId, CancellationToken.None);
 

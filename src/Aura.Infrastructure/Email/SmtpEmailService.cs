@@ -12,10 +12,12 @@ namespace Aura.Infrastructure.Email;
 
 public class SmtpEmailService(
     IOptions<SmtpSettings> settings,
+    IOptions<FrontendSettings> frontendSettings,
     IHostEnvironment environment,
     ILogger<SmtpEmailService> logger) : IEmailService
 {
     private readonly SmtpSettings _settings = settings.Value;
+    private readonly FrontendSettings _frontend = frontendSettings.Value;
 
     public async Task SendEmailAsync(string to, string subject, string htmlBody, CancellationToken cancellationToken = default)
     {
@@ -52,7 +54,7 @@ public class SmtpEmailService(
                <p>Please respond by <strong>{respondByUtc:yyyy-MM-dd HH:mm} UTC</strong>
                   or your placement will expire and you will be removed from the period.</p>
                <p>Open the dashboard to accept or decline:
-                  <a href=""http://localhost:5173/"">View my allocation</a></p>");
+                  <a href=""{WebUtility.HtmlEncode(_frontend.BaseUrl)}"">View my allocation</a></p>");
 
         return SendEmailAsync(toEmail, subject, body, cancellationToken);
     }
@@ -69,7 +71,7 @@ public class SmtpEmailService(
                   ({WebUtility.HtmlEncode(campusName)}).</p>
                <p>Pending placements expire on <strong>{respondByUtc:yyyy-MM-dd HH:mm} UTC</strong>.</p>
                <p>Open the dashboard to accept or decline:
-                  <a href=""http://localhost:5173/"">View my allocation</a></p>");
+                  <a href=""{WebUtility.HtmlEncode(_frontend.BaseUrl)}"">View my allocation</a></p>");
 
         return SendEmailAsync(toEmail, subject, body, cancellationToken);
     }
@@ -101,7 +103,7 @@ public class SmtpEmailService(
                   in <strong>{WebUtility.HtmlEncode(campusName)}</strong>
                   instead of <strong>{WebUtility.HtmlEncode(oldDormName)}</strong>.</p>
                <p>Open the dashboard to view your placement:
-                  <a href=""http://localhost:5173/"">View my allocation</a></p>");
+                  <a href=""{WebUtility.HtmlEncode(_frontend.BaseUrl)}"">View my allocation</a></p>");
 
         return SendEmailAsync(toEmail, subject, body, cancellationToken);
     }

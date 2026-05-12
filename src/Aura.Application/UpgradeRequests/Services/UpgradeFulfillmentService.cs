@@ -46,15 +46,20 @@ public class UpgradeFulfillmentService(
                 freedDormId, group.Key.FacultyId, group.Key.Gender, periodId, cancellationToken);
             if (available < 1) continue;
 
+            // Batch-fetch active allocations for this group's candidates — runs once per group,
+            // not once per candidate. Placed after the capacity check so we don't hit the DB
+            // when the dorm has no spots for this (faculty, gender) bucket.
+            var groupUserIds = group.Select(r => r.UserId).ToList();
+            var groupActive = await dormAllocationRepository.GetActiveByUsersAndPeriodAsync(groupUserIds, periodId, cancellationToken);
+            var activeByUser = groupActive.ToDictionary(a => a.UserId);
+
             var candidates = new List<(UpgradeRequest Request, User User, StudentRecord Record, DormPreference Pref, DormAllocation Active)>();
             foreach (var req in group)
             {
                 var user = usersById[req.UserId];
                 if (!recordsByUser.TryGetValue(req.UserId, out var record)) continue;
                 if (!firstPrefByUser.TryGetValue(req.UserId, out var firstPref)) continue;
-
-                var active = await dormAllocationRepository.FindActiveByUserAndPeriodAsync(req.UserId, periodId, cancellationToken);
-                if (active is null) continue;
+                if (!activeByUser.TryGetValue(req.UserId, out var active)) continue;
 
                 candidates.Add((req, user, record, firstPref, active));
             }

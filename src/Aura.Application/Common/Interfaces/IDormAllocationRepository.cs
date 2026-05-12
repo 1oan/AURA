@@ -10,6 +10,14 @@ public interface IDormAllocationRepository
     Task<DormAllocation?> FindActiveByUserAndPeriodAsync(
         Guid userId, Guid allocationPeriodId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Batch variant of <see cref="FindActiveByUserAndPeriodAsync"/>. Loads all active
+    /// (Pending or Accepted) allocations for the given user ids in a single query.
+    /// Used by fulfillment paths that score multiple candidates and would otherwise N+1.
+    /// </summary>
+    Task<List<DormAllocation>> GetActiveByUsersAndPeriodAsync(
+        IEnumerable<Guid> userIds, Guid allocationPeriodId, CancellationToken cancellationToken = default);
+
     Task<DormAllocation?> FindLatestByUserAndPeriodAsync(
         Guid userId, Guid allocationPeriodId, CancellationToken cancellationToken = default);
 

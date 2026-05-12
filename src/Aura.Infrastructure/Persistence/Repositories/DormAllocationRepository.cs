@@ -26,6 +26,21 @@ public class DormAllocationRepository(AuraDbContext context) : IDormAllocationRe
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<List<DormAllocation>> GetActiveByUsersAndPeriodAsync(
+        IEnumerable<Guid> userIds, Guid allocationPeriodId, CancellationToken cancellationToken = default)
+    {
+        var ids = userIds.Distinct().ToList();
+        if (ids.Count == 0) return [];
+
+        return await context.DormAllocations
+            .Include(a => a.Dormitory!)
+                .ThenInclude(d => d.Campus)
+            .Where(a => a.AllocationPeriodId == allocationPeriodId)
+            .Where(a => ids.Contains(a.UserId))
+            .Where(a => a.Status == AllocationStatus.Pending || a.Status == AllocationStatus.Accepted)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<DormAllocation?> FindLatestByUserAndPeriodAsync(
         Guid userId, Guid allocationPeriodId, CancellationToken cancellationToken = default)
     {

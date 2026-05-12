@@ -10,5 +10,8 @@
   },
   "Jwt": {
     "Secret": "YOUR_SECRET_KEY_AT_LEAST_32_BYTES_LONG"
+  },
+  "Frontend": {
+    "BaseUrl": "http://localhost:5173"
   }
 }
