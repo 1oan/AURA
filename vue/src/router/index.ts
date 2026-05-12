@@ -65,6 +65,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('@/pages/ProfilePage.vue'),
+      meta: { requiresAuth: true, roles: ['Student'] },
+    },
+    {
       path: '/upgrade-request',
       name: 'upgrade-request',
       component: () => import('@/pages/UpgradeRequestPage.vue'),

@@ -17,6 +17,7 @@ import {
   LogOut,
   Sparkles,
   ArrowUpFromLine,
+  User,
 } from 'lucide-vue-next'
 import {
   Sidebar,
@@ -82,6 +83,7 @@ const managementNav: NavItem[] = [
 const allocationNav: NavItem[] = [
   { title: 'Students', url: '/students', icon: Users, roles: ['SuperAdmin', 'FacultyAdmin'] },
   { title: 'Preferences', url: '/preferences', icon: ListOrdered },
+  { title: 'Profile', url: '/profile', icon: User, roles: ['Student'] },
   { title: 'Upgrade Request', url: '/upgrade-request', icon: ArrowUpFromLine, roles: ['Student'] },
   { title: 'Allocations', url: '/allocations', icon: Sparkles, roles: ['SuperAdmin', 'FacultyAdmin'] },
   { title: 'Room Assignment', url: '/room-assignment', icon: DoorOpen, roles: ['SuperAdmin', 'FacultyAdmin'] },

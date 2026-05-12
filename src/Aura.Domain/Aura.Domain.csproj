@@ -10,4 +10,9 @@
     <InternalsVisibleTo Include="Aura.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Abstractions" Version="10.0.7" />
+    <PackageReference Include="Pgvector" Version="0.3.2" />
+  </ItemGroup>
+
 </Project>

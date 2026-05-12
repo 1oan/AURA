@@ -32,6 +32,7 @@ import { getMyAllocation, acceptAllocation, declineAllocation } from '@/api/dorm
 import type { DormAllocationDto } from '@/api/dormAllocations'
 import { ApiError } from '@/api/client'
 import DeclineAllocationDialog from '@/components/features/DeclineAllocationDialog.vue'
+import ProfileCompletenessBanner from '@/components/features/profile/ProfileCompletenessBanner.vue'
 
 const authStore = useAuthStore()
 const isAdmin = computed(() => ['SuperAdmin', 'FacultyAdmin'].includes(authStore.user?.role ?? ''))
@@ -452,6 +453,7 @@ const myAllocationCardClass = computed(() => {
 
       <!-- Student view -->
       <template v-else>
+        <ProfileCompletenessBanner />
         <!-- No active period -->
         <Card v-if="!activePeriodForStudent">
           <CardContent class="flex flex-col items-center justify-center py-12">
