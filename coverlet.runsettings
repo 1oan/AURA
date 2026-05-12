@@ -14,8 +14,8 @@
               - *Dto.cs: plain data carriers; behaviour-free.
               - AuthResult.cs / ValidationException.cs: result wrappers with no logic.
             Everything else (controllers, repositories, middleware, external clients,
-            auth services, behaviours) IS measured. KAN-105 unblinded the metric on
-            2026-05-12; expect the baseline to drop from the prior inflated 97%+.
+            auth services, behaviours) IS measured. See KAN-105 for the rationale
+            behind unblinding the metric and maintaining this exclusion list.
           -->
           <ExcludeByFile>**/Migrations/**/*.cs,**/Program.cs,**/DependencyInjection.cs,**/*Configuration.cs,**/*Dto.cs,**/Common/AuthResult.cs,**/Common/Exceptions/ValidationException.cs</ExcludeByFile>
           <Exclude>[Aura.Tests]*,[*]*.Migrations.*</Exclude>
