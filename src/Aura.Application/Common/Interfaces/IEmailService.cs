@@ -19,4 +19,17 @@ public interface IEmailService
     Task SendAllocationUpgradedAsync(
         string toEmail, string firstName, string oldDormName, string newDormName, string campusName,
         CancellationToken cancellationToken);
+
+    Task SendGroupInvitationAsync(
+        string toEmail, string firstName, string inviterFirstName,
+        string dormitoryName, int roomSizePreference,
+        CancellationToken cancellationToken);
+
+    Task SendGroupLockedAsync(
+        string toEmail, string firstName, string dormitoryName,
+        string[] memberFirstNames, CancellationToken cancellationToken);
+
+    Task SendGroupExpiredAsync(
+        string toEmail, string firstName, string dormitoryName,
+        CancellationToken cancellationToken);
 }

@@ -47,6 +47,8 @@ public static class DependencyInjection
         services.AddScoped<IStudentProfileRepository, StudentProfileRepository>();
         services.AddScoped<IStudentEmbeddingRepository, StudentEmbeddingRepository>();
         services.AddScoped<ISpotifySnapshotRepository, SpotifySnapshotRepository>();
+        services.AddScoped<IRoommateGroupRepository, RoommateGroupRepository>();
+        services.AddScoped<IGroupInvitationRepository, GroupInvitationRepository>();
         services.AddHttpClient<ISpotifyClient, SpotifyClient>();
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 
@@ -61,6 +63,7 @@ public static class DependencyInjection
         services.AddSingleton(TimeProvider.System);
         services.AddHostedService<AllocationSchedulerService>();
         services.AddHostedService<AllocationExpirationService>();
+        services.AddHostedService<GroupExpirationService>();
 
         return services;
     }
