@@ -1,7 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using Aura.Application.Common.Interfaces;
 using Aura.Application.Common.Settings;
@@ -91,21 +90,21 @@ public class SpotifyClient(HttpClient httpClient, IOptions<SpotifySettings> opti
         return await response.Content.ReadFromJsonAsync<T>(cancellationToken: cancellationToken);
     }
 
-    private class TokenPayload
+    private sealed class TokenPayload
     {
-        [JsonPropertyName("access_token")] public string AccessToken { get; set; } = "";
-        [JsonPropertyName("refresh_token")] public string RefreshToken { get; set; } = "";
-        [JsonPropertyName("expires_in")] public int ExpiresIn { get; set; }
-        [JsonPropertyName("scope")] public string Scope { get; set; } = "";
+        [JsonPropertyName("access_token")] public string AccessToken { get; init; } = "";
+        [JsonPropertyName("refresh_token")] public string RefreshToken { get; init; } = "";
+        [JsonPropertyName("expires_in")] public int ExpiresIn { get; init; }
+        [JsonPropertyName("scope")] public string Scope { get; init; } = "";
     }
-    private class ArtistsPayload { public ArtistItem[]? Items { get; set; } }
-    private class ArtistItem { public string? Name { get; set; } public string[]? Genres { get; set; } }
-    private class TracksPayload { public TrackItem[]? Items { get; set; } }
-    private class TrackItem { public string? Id { get; set; } public string? Name { get; set; } public TrackArtist[]? Artists { get; set; } }
-    private class TrackArtist { public string? Name { get; set; } }
-    private class AudioFeaturesPayload
+    private sealed class ArtistsPayload { public ArtistItem[]? Items { get; init; } }
+    private sealed class ArtistItem { public string? Name { get; init; } public string[]? Genres { get; init; } }
+    private sealed class TracksPayload { public TrackItem[]? Items { get; init; } }
+    private sealed class TrackItem { public string? Id { get; init; } public string? Name { get; init; } public TrackArtist[]? Artists { get; init; } }
+    private sealed class TrackArtist { public string? Name { get; init; } }
+    private sealed class AudioFeaturesPayload
     {
-        [JsonPropertyName("audio_features")] public AudioFeatureItem[]? AudioFeatures { get; set; }
+        [JsonPropertyName("audio_features")] public AudioFeatureItem[]? AudioFeatures { get; init; }
     }
-    private class AudioFeatureItem { public double Energy { get; set; } public double Valence { get; set; } public double Danceability { get; set; } }
+    private sealed class AudioFeatureItem { public double Energy { get; init; } public double Valence { get; init; } public double Danceability { get; init; } }
 }

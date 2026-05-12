@@ -5,7 +5,10 @@ namespace Aura.Domain.Entities;
 
 public class Interest
 {
-    private static readonly Regex SlugPattern = new("^[a-z0-9]+(-[a-z0-9]+)*$", RegexOptions.Compiled);
+    private static readonly Regex SlugPattern = new(
+        "^[a-z0-9]+(-[a-z0-9]+)*$",
+        RegexOptions.Compiled,
+        TimeSpan.FromMilliseconds(100));
 
     public Guid Id { get; private set; }
     public string Slug { get; private set; } = null!;

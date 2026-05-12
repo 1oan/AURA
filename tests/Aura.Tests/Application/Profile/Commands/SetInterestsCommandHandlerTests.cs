@@ -9,6 +9,9 @@ namespace Aura.Tests.Application.Profile.Commands;
 
 public class SetInterestsCommandHandlerTests
 {
+    private static readonly string[] FootballGaming = ["football", "gaming"];
+    private static readonly string[] FootballGhost = ["football", "ghost-slug"];
+
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
     private readonly IStudentProfileRepository _profiles = Substitute.For<IStudentProfileRepository>();
     private readonly IStudentEmbeddingRepository _embeddings = Substitute.For<IStudentEmbeddingRepository>();
@@ -31,7 +34,7 @@ public class SetInterestsCommandHandlerTests
                 Interest.Create(Guid.NewGuid(), "gaming", "Gaming", "entertainment", 4),
             });
 
-        await Create().Handle(new SetInterestsCommand(new[] { "football", "gaming" }), CancellationToken.None);
+        await Create().Handle(new SetInterestsCommand(FootballGaming), CancellationToken.None);
 
         existing.InterestSlugs.Should().Equal("football", "gaming");
         await _profiles.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -51,7 +54,7 @@ public class SetInterestsCommandHandlerTests
             });
 
         var act = async () => await Create().Handle(
-            new SetInterestsCommand(new[] { "football", "ghost-slug" }), CancellationToken.None);
+            new SetInterestsCommand(FootballGhost), CancellationToken.None);
 
         await act.Should().ThrowAsync<DomainException>().WithMessage("*ghost-slug*");
     }

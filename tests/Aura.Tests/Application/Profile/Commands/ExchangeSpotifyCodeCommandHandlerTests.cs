@@ -12,6 +12,11 @@ namespace Aura.Tests.Application.Profile.Commands;
 
 public class ExchangeSpotifyCodeCommandHandlerTests
 {
+    private static readonly string[] DefaultScopes = ["user-top-read"];
+    private static readonly string[] SampleArtists = ["Radiohead"];
+    private static readonly string[] SampleTracks = ["Radiohead - Reckoner"];
+    private static readonly string[] SampleGenres = ["indie"];
+
     private readonly IDataProtectionProvider _protectionProvider = Substitute.For<IDataProtectionProvider>();
     private readonly IDataProtector _stateProtector = Substitute.For<IDataProtector>();
     private readonly IDataProtector _tokenProtector = Substitute.For<IDataProtector>();
@@ -41,10 +46,10 @@ public class ExchangeSpotifyCodeCommandHandlerTests
         _stateProtector.Unprotect(Arg.Any<byte[]>())
             .Returns(Encoding.UTF8.GetBytes(_userId.ToString()));
         _spotifyClient.ExchangeCodeAsync("code-abc", "https://r/", Arg.Any<CancellationToken>())
-            .Returns(new SpotifyTokenResponse("access-1", "refresh-1", 3600, new[] { "user-top-read" }));
+            .Returns(new SpotifyTokenResponse("access-1", "refresh-1", 3600, DefaultScopes));
         _spotifyClient.FetchUserSnapshotAsync("access-1", Arg.Any<CancellationToken>())
             .Returns(new SpotifyUserSnapshot(
-                new[] { "Radiohead" }, new[] { "Radiohead - Reckoner" }, new[] { "indie" },
+                SampleArtists, SampleTracks, SampleGenres,
                 0.5m, 0.4m, 0.5m));
         _profiles.FindByUserIdAsync(_userId, Arg.Any<CancellationToken>()).Returns((StudentProfile?)null);
 

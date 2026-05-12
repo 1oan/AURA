@@ -7,6 +7,8 @@ namespace Aura.Tests.Domain.Entities;
 
 public class StudentProfileTests
 {
+    private static readonly int[] AllNeutral = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4];
+
     private readonly Guid _userId = Guid.NewGuid();
 
     [Fact]
@@ -229,7 +231,7 @@ public class StudentProfileTests
         var profile = StudentProfile.Create(_userId);
         profile.SubmitLifestyle(SleepSchedule.Normal, WakeUpTime.Normal, 3,
             NoiseTolerance.Some, StudyLocation.Mixed, GuestFrequency.Weekly, SmokingHabit.No);
-        profile.SubmitTipi(new[] { 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 });
+        profile.SubmitTipi(AllNeutral);
         profile.SetInterests(new[] { "football" });
         profile.ConnectSpotify("a", "b", DateTime.UtcNow.AddHours(1),
             new[] { "user-top-read" }, new FakeDataProtector());

@@ -5,12 +5,15 @@ namespace Aura.Tests.Application.Profile.Validators;
 
 public class SubmitTipiCommandValidatorTests
 {
+    private static readonly int[] AllNeutral = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4];
+    private static readonly int[] LastOutOfRange = [4, 4, 4, 4, 4, 4, 4, 4, 4, 8];
+
     private readonly SubmitTipiCommandValidator _validator = new();
 
     [Fact]
     public void ValidAnswers_NoErrors()
     {
-        var result = _validator.TestValidate(new SubmitTipiCommand(new[] { 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 }));
+        var result = _validator.TestValidate(new SubmitTipiCommand(AllNeutral));
         result.ShouldNotHaveAnyValidationErrors();
     }
 
@@ -34,8 +37,7 @@ public class SubmitTipiCommandValidatorTests
     [Fact]
     public void OutOfRange_HasError()
     {
-        var answers = new[] { 4, 4, 4, 4, 4, 4, 4, 4, 4, 8 };
-        var result = _validator.TestValidate(new SubmitTipiCommand(answers));
+        var result = _validator.TestValidate(new SubmitTipiCommand(LastOutOfRange));
         result.ShouldHaveValidationErrorFor(x => x.Answers);
     }
 }

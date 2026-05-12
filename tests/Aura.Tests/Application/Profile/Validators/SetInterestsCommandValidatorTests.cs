@@ -5,12 +5,16 @@ namespace Aura.Tests.Application.Profile.Validators;
 
 public class SetInterestsCommandValidatorTests
 {
+    private static readonly string[] FootballGaming = ["football", "gaming"];
+    private static readonly string[] FootballDuplicate = ["football", "football"];
+    private static readonly string[] FootballBlank = ["football", ""];
+
     private readonly SetInterestsCommandValidator _validator = new();
 
     [Fact]
     public void Valid_NoErrors()
     {
-        var result = _validator.TestValidate(new SetInterestsCommand(new[] { "football", "gaming" }));
+        var result = _validator.TestValidate(new SetInterestsCommand(FootballGaming));
         result.ShouldNotHaveAnyValidationErrors();
     }
 
@@ -24,7 +28,7 @@ public class SetInterestsCommandValidatorTests
     [Fact]
     public void Duplicates_HasError()
     {
-        var result = _validator.TestValidate(new SetInterestsCommand(new[] { "football", "football" }));
+        var result = _validator.TestValidate(new SetInterestsCommand(FootballDuplicate));
         result.ShouldHaveValidationErrorFor(x => x.Slugs);
     }
 
@@ -39,7 +43,7 @@ public class SetInterestsCommandValidatorTests
     [Fact]
     public void BlankSlug_HasError()
     {
-        var result = _validator.TestValidate(new SetInterestsCommand(new[] { "football", "" }));
+        var result = _validator.TestValidate(new SetInterestsCommand(FootballBlank));
         result.ShouldHaveValidationErrorFor(x => x.Slugs);
     }
 }
