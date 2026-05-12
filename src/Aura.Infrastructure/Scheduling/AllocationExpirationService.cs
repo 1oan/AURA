@@ -1,5 +1,4 @@
-using Aura.Application.Common.Events;
-using Aura.Application.Common.Interfaces;
+using Aura.Application.DormAllocations.Commands.RunAllocationMaintenance;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -28,29 +27,12 @@ public class AllocationExpirationService(
         try
         {
             using var scope = serviceProvider.CreateScope();
-            var repo = scope.ServiceProvider.GetRequiredService<IDormAllocationRepository>();
-            var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
-
-            var now = timeProvider.GetUtcNow().UtcDateTime;
-            var stale = await repo.GetExpirablePendingAsync(now, cancellationToken);
-            if (stale.Count == 0) return;
-
-            foreach (var allocation in stale)
-            {
-                allocation.Expire();
-            }
-            await repo.SaveChangesAsync(cancellationToken);
-
-            foreach (var allocation in stale)
-            {
-                await publisher.Publish(
-                    new AllocationExpiredEvent(allocation.Id, allocation.UserId, allocation.DormitoryId, allocation.AllocationPeriodId),
-                    cancellationToken);
-            }
+            var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+            await sender.Send(new RunAllocationMaintenanceCommand(), cancellationToken);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Allocation expiration tick failed");
+            logger.LogError(ex, "Allocation maintenance tick failed");
         }
     }
 }

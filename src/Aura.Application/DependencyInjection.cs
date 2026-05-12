@@ -1,4 +1,5 @@
 using Aura.Application.Common.Behaviors;
+using Aura.Application.UpgradeRequests.Services;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +15,8 @@ public static class DependencyInjection
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
         services.AddValidatorsFromAssembly(assembly);
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+        services.AddScoped<IUpgradeFulfillmentService, UpgradeFulfillmentService>();
 
         return services;
     }

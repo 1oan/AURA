@@ -26,6 +26,21 @@ public class DormAllocationRepository(AuraDbContext context) : IDormAllocationRe
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<List<DormAllocation>> GetActiveByUsersAndPeriodAsync(
+        IEnumerable<Guid> userIds, Guid allocationPeriodId, CancellationToken cancellationToken = default)
+    {
+        var ids = userIds.Distinct().ToList();
+        if (ids.Count == 0) return [];
+
+        return await context.DormAllocations
+            .Include(a => a.Dormitory!)
+                .ThenInclude(d => d.Campus)
+            .Where(a => a.AllocationPeriodId == allocationPeriodId)
+            .Where(a => ids.Contains(a.UserId))
+            .Where(a => a.Status == AllocationStatus.Pending || a.Status == AllocationStatus.Accepted)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<DormAllocation?> FindLatestByUserAndPeriodAsync(
         Guid userId, Guid allocationPeriodId, CancellationToken cancellationToken = default)
     {
@@ -124,6 +139,23 @@ public class DormAllocationRepository(AuraDbContext context) : IDormAllocationRe
         return allPending
             .Where(a => a.AllocationPeriod != null
                 && a.AllocatedAt.AddDays(a.AllocationPeriod.ResponseWindowDays) <= now)
+            .ToList();
+    }
+
+    public async Task<List<DormAllocation>> GetReminderDueAsync(DateTime now, CancellationToken cancellationToken = default)
+    {
+        // Pull all Pending records (without an existing reminder) into memory to filter by
+        // AllocatedAt + ResponseWindowDays/2 <= now. EF/Npgsql cannot translate DateTime.AddDays
+        // with a per-row int column in SQL, but the Pending set is small (bounded by active rounds).
+        var candidates = await context.DormAllocations
+            .Include(a => a.AllocationPeriod)
+            .Where(a => a.Status == AllocationStatus.Pending)
+            .Where(a => a.ReminderSentAt == null)
+            .ToListAsync(cancellationToken);
+
+        return candidates
+            .Where(a => a.AllocationPeriod != null
+                && a.AllocatedAt.AddDays(a.AllocationPeriod.ResponseWindowDays / 2.0) <= now)
             .ToList();
     }
 

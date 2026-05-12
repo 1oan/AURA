@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 
         services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
+        services.Configure<FrontendSettings>(configuration.GetSection("Frontend"));
         services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddScoped<DataSeeder>();
 

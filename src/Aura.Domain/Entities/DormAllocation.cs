@@ -13,6 +13,7 @@ public class DormAllocation
     public AllocationStatus Status { get; private set; }
     public DateTime AllocatedAt { get; private set; }
     public DateTime? RespondedAt { get; private set; }
+    public DateTime? ReminderSentAt { get; private set; }
 
     public User? User { get; private set; }
     public Dormitory? Dormitory { get; private set; }
@@ -74,5 +75,14 @@ public class DormAllocation
             throw new DomainException($"Cannot replace allocation in status {Status}.");
         Status = AllocationStatus.Replaced;
         RespondedAt = DateTime.UtcNow;
+    }
+
+    public void MarkReminderSent()
+    {
+        if (Status != AllocationStatus.Pending)
+            throw new DomainException("Reminder is only relevant for Pending allocations.");
+        if (ReminderSentAt is not null)
+            throw new DomainException("Reminder has already been sent for this allocation.");
+        ReminderSentAt = DateTime.UtcNow;
     }
 }

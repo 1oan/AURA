@@ -65,6 +65,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/upgrade-request',
+      name: 'upgrade-request',
+      component: () => import('@/pages/UpgradeRequestPage.vue'),
+      meta: { requiresAuth: true, roles: ['Student'] },
+    },
+    {
       path: '/allocations',
       name: 'allocations',
       component: () => import('@/pages/AllocationsPage.vue'),
@@ -87,6 +93,11 @@ const router = createRouter({
       name: 'settings',
       component: () => import('@/pages/SettingsPage.vue'),
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('@/pages/NotFoundPage.vue'),
     },
   ],
 })

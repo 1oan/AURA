@@ -26,6 +26,7 @@ public class DormAllocationTests
         allocation.Status.Should().Be(AllocationStatus.Pending);
         allocation.AllocatedAt.Should().BeOnOrAfter(before).And.BeOnOrBefore(after);
         allocation.RespondedAt.Should().BeNull();
+        allocation.ReminderSentAt.Should().BeNull();
     }
 
     [Fact]
@@ -136,5 +137,66 @@ public class DormAllocationTests
         allocation.Decline();
         var act = () => allocation.Replace();
         act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
+    public void MarkReminderSent_WhenPending_SetsTimestamp()
+    {
+        var allocation = DormAllocation.Create(_userId, _dormId, _periodId, 1);
+        var before = DateTime.UtcNow;
+        allocation.MarkReminderSent();
+        var after = DateTime.UtcNow;
+
+        allocation.ReminderSentAt.Should().NotBeNull();
+        allocation.ReminderSentAt.Should().BeOnOrAfter(before).And.BeOnOrBefore(after);
+        allocation.Status.Should().Be(AllocationStatus.Pending);
+    }
+
+    [Fact]
+    public void MarkReminderSent_WhenAccepted_ThrowsDomainException()
+    {
+        var allocation = DormAllocation.Create(_userId, _dormId, _periodId, 1);
+        allocation.Accept();
+        var act = () => allocation.MarkReminderSent();
+        act.Should().Throw<DomainException>().WithMessage("Reminder is only relevant for Pending allocations.");
+    }
+
+    [Fact]
+    public void MarkReminderSent_WhenDeclined_ThrowsDomainException()
+    {
+        var allocation = DormAllocation.Create(_userId, _dormId, _periodId, 1);
+        allocation.Decline();
+        var act = () => allocation.MarkReminderSent();
+        act.Should().Throw<DomainException>().WithMessage("Reminder is only relevant for Pending allocations.");
+    }
+
+    [Fact]
+    public void MarkReminderSent_WhenExpired_ThrowsDomainException()
+    {
+        var allocation = DormAllocation.Create(_userId, _dormId, _periodId, 1);
+        allocation.Expire();
+        var act = () => allocation.MarkReminderSent();
+        act.Should().Throw<DomainException>().WithMessage("Reminder is only relevant for Pending allocations.");
+    }
+
+    [Fact]
+    public void MarkReminderSent_WhenReplaced_ThrowsDomainException()
+    {
+        var allocation = DormAllocation.Create(_userId, _dormId, _periodId, 1);
+        allocation.Replace();
+        var act = () => allocation.MarkReminderSent();
+        act.Should().Throw<DomainException>().WithMessage("Reminder is only relevant for Pending allocations.");
+    }
+
+    [Fact]
+    public void MarkReminderSent_WhenAlreadySent_ThrowsDomainException()
+    {
+        var allocation = DormAllocation.Create(_userId, _dormId, _periodId, 1);
+        allocation.MarkReminderSent();
+
+        var act = () => allocation.MarkReminderSent();
+
+        act.Should().Throw<DomainException>()
+            .WithMessage("Reminder has already been sent for this allocation.");
     }
 }

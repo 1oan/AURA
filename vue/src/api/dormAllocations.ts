@@ -27,3 +27,11 @@ export function getAllocationsForPeriod(periodId: string): Promise<DormAllocatio
 export function advanceRound(periodId: string): Promise<void> {
   return apiClient<void>(`/allocations/periods/${periodId}/advance-round`, { method: 'POST' })
 }
+
+export function acceptAllocation(allocationId: string): Promise<void> {
+  return apiClient<void>(`/allocations/${allocationId}/accept`, { method: 'POST' })
+}
+
+export function declineAllocation(allocationId: string): Promise<void> {
+  return apiClient<void>(`/allocations/${allocationId}/decline`, { method: 'POST' })
+}
