@@ -18,9 +18,24 @@ public class RunAllocationMaintenanceCommandHandler(
         await ExpireOverdue(now, cancellationToken);
     }
 
-    // Reminder dispatch wires up in Unit 9 (KAN-55).
-    private static Task SendHalfwayPointReminders(DateTime now, CancellationToken cancellationToken)
-        => Task.CompletedTask;
+    private async Task SendHalfwayPointReminders(DateTime now, CancellationToken cancellationToken)
+    {
+        var due = await dormAllocationRepository.GetReminderDueAsync(now, cancellationToken);
+        if (due.Count == 0) return;
+
+        foreach (var allocation in due)
+        {
+            allocation.MarkReminderSent();
+        }
+        await dormAllocationRepository.SaveChangesAsync(cancellationToken);
+
+        foreach (var allocation in due)
+        {
+            await publisher.Publish(
+                new AllocationReminderDueEvent(allocation.Id, allocation.UserId, allocation.DormitoryId, allocation.AllocationPeriodId),
+                cancellationToken);
+        }
+    }
 
     private async Task ExpireOverdue(DateTime now, CancellationToken cancellationToken)
     {

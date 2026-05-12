@@ -38,7 +38,7 @@ public class GetAvailableUpgradeTargetsQueryHandlerTests
         return user;
     }
 
-    private AllocationPeriod CreateOpenPeriod()
+    private static AllocationPeriod CreateOpenPeriod()
     {
         var period = AllocationPeriod.Create(
             "2026-2027",

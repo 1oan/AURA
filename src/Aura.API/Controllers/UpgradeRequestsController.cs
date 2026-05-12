@@ -42,4 +42,6 @@ public class UpgradeRequestsController(ISender sender) : ControllerBase
     }
 }
 
-public record SubmitUpgradeRequestRequest(Guid AllocationPeriodId, List<Guid> DormitoryIds);
+public record SubmitUpgradeRequestRequest(
+    [property: System.Text.Json.Serialization.JsonRequired] Guid AllocationPeriodId,
+    [property: System.Text.Json.Serialization.JsonRequired] List<Guid> DormitoryIds);

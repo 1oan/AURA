@@ -70,7 +70,7 @@ public class SubmitUpgradeRequestCommandHandler(
         Guid allocationPeriodId,
         CancellationToken cancellationToken)
     {
-        if (targetDormIds.Any(id => id == currentDormId))
+        if (targetDormIds.Contains(currentDormId))
             throw new DomainException("Upgrade targets must differ from your current dormitory.");
 
         var allocations = await facultyRoomAllocationRepository

@@ -155,7 +155,7 @@ public class DormAllocationRepository(AuraDbContext context) : IDormAllocationRe
 
         return candidates
             .Where(a => a.AllocationPeriod != null
-                && a.AllocatedAt.AddDays(a.AllocationPeriod.ResponseWindowDays / 2) <= now)
+                && a.AllocatedAt.AddDays(a.AllocationPeriod.ResponseWindowDays / 2.0) <= now)
             .ToList();
     }
 
