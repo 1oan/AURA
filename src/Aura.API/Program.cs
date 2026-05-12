@@ -3,9 +3,11 @@ using Aura.API.Middleware;
 using Aura.API.Services;
 using Aura.Application;
 using Aura.Application.Common.Interfaces;
+using Aura.Application.Common.Settings;
 using Aura.Infrastructure;
 using Aura.Infrastructure.Persistence.Seeding;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -17,7 +19,15 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.Configure<SpotifySettings>(builder.Configuration.GetSection("Spotify"));
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+// Persist Data Protection keys outside the container so encrypted Spotify tokens
+// and signed OAuth state survive `docker compose up --build`. Without this,
+// the master key is ephemeral and every rebuild silently invalidates stored tokens.
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("/var/aura/dpkeys"))
+    .SetApplicationName("Aura");
 
 var jwtSecret = builder.Configuration["Jwt:Secret"]
     ?? throw new InvalidOperationException("Jwt:Secret is not configured.");

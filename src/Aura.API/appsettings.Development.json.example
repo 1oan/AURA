@@ -13,5 +13,11 @@
   },
   "Frontend": {
     "BaseUrl": "http://localhost:5173"
+  },
+  "Spotify": {
+    "ClientId": "<your-spotify-client-id>",
+    "ClientSecret": "<your-spotify-client-secret>",
+    "RedirectUri": "http://127.0.0.1:5000/api/profile/spotify/callback",
+    "FrontendBaseUrl": "http://localhost:5173"
   }
 }

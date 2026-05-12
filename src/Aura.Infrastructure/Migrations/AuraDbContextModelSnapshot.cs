@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using Pgvector;
 
 #nullable disable
 
@@ -270,6 +271,368 @@ namespace Aura.Infrastructure.Migrations
                     b.ToTable("FacultyRoomAllocations");
                 });
 
+            modelBuilder.Entity("Aura.Domain.Entities.Interest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.HasIndex("Category", "DisplayOrder", "IsActive");
+
+                    b.ToTable("Interests", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("a0000001-0001-0001-0001-000000000001"),
+                            Category = "sports",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            Label = "Football",
+                            Slug = "football"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000001-0001-0001-0001-000000000002"),
+                            Category = "sports",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            Label = "Basketball",
+                            Slug = "basketball"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000001-0001-0001-0001-000000000003"),
+                            Category = "sports",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            Label = "Tennis",
+                            Slug = "tennis"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000001-0001-0001-0001-000000000004"),
+                            Category = "sports",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            Label = "Running",
+                            Slug = "running"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000001-0001-0001-0001-000000000005"),
+                            Category = "sports",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            Label = "Gym",
+                            Slug = "gym"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000001-0001-0001-0001-000000000006"),
+                            Category = "sports",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            Label = "Swimming",
+                            Slug = "swimming"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000001-0001-0001-0001-000000000007"),
+                            Category = "sports",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 7,
+                            IsActive = true,
+                            Label = "Hiking",
+                            Slug = "hiking"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000001-0001-0001-0001-000000000008"),
+                            Category = "sports",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 8,
+                            IsActive = true,
+                            Label = "Cycling",
+                            Slug = "cycling"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000002-0002-0002-0002-000000000001"),
+                            Category = "entertainment",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            Label = "Movies",
+                            Slug = "movies"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000002-0002-0002-0002-000000000002"),
+                            Category = "entertainment",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            Label = "TV Series",
+                            Slug = "tv-series"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000002-0002-0002-0002-000000000003"),
+                            Category = "entertainment",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            Label = "Anime",
+                            Slug = "anime"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000002-0002-0002-0002-000000000004"),
+                            Category = "entertainment",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            Label = "Gaming",
+                            Slug = "gaming"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000002-0002-0002-0002-000000000005"),
+                            Category = "entertainment",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            Label = "Board Games",
+                            Slug = "board-games"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000002-0002-0002-0002-000000000006"),
+                            Category = "entertainment",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            Label = "Podcasts",
+                            Slug = "podcasts"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000002-0002-0002-0002-000000000007"),
+                            Category = "entertainment",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 7,
+                            IsActive = true,
+                            Label = "Live Music",
+                            Slug = "live-music"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000002-0002-0002-0002-000000000008"),
+                            Category = "entertainment",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 8,
+                            IsActive = true,
+                            Label = "Reading",
+                            Slug = "reading"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000003-0003-0003-0003-000000000001"),
+                            Category = "arts",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            Label = "Drawing",
+                            Slug = "drawing"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000003-0003-0003-0003-000000000002"),
+                            Category = "arts",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            Label = "Photography",
+                            Slug = "photography"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000003-0003-0003-0003-000000000003"),
+                            Category = "arts",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            Label = "Writing",
+                            Slug = "writing"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000003-0003-0003-0003-000000000004"),
+                            Category = "arts",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            Label = "Playing music",
+                            Slug = "music-playing"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000003-0003-0003-0003-000000000005"),
+                            Category = "arts",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            Label = "Theater",
+                            Slug = "theater"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000003-0003-0003-0003-000000000006"),
+                            Category = "arts",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            Label = "Crafts",
+                            Slug = "crafts"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000004-0004-0004-0004-000000000001"),
+                            Category = "academic",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            Label = "Programming",
+                            Slug = "programming"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000004-0004-0004-0004-000000000002"),
+                            Category = "academic",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            Label = "Science",
+                            Slug = "science"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000004-0004-0004-0004-000000000003"),
+                            Category = "academic",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            Label = "History",
+                            Slug = "history"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000004-0004-0004-0004-000000000004"),
+                            Category = "academic",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            Label = "Languages",
+                            Slug = "languages"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000004-0004-0004-0004-000000000005"),
+                            Category = "academic",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            Label = "Mathematics",
+                            Slug = "mathematics"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000005-0005-0005-0005-000000000001"),
+                            Category = "lifestyle",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            Label = "Cooking",
+                            Slug = "cooking"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000005-0005-0005-0005-000000000002"),
+                            Category = "lifestyle",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            Label = "Traveling",
+                            Slug = "traveling"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000005-0005-0005-0005-000000000003"),
+                            Category = "lifestyle",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            Label = "Volunteering",
+                            Slug = "volunteering"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000005-0005-0005-0005-000000000004"),
+                            Category = "lifestyle",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            Label = "Pets",
+                            Slug = "pets"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0000005-0005-0005-0005-000000000005"),
+                            Category = "lifestyle",
+                            CreatedAt = new DateTime(2026, 5, 10, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            Label = "Fashion",
+                            Slug = "fashion"
+                        });
+                });
+
             modelBuilder.Entity("Aura.Domain.Entities.Room", b =>
                 {
                     b.Property<Guid>("Id")
@@ -299,6 +662,170 @@ namespace Aura.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.SpotifySnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("AvgDanceability")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("AvgEnergy")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("AvgValence")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("FetchedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.PrimitiveCollection<string>("TopArtists")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.PrimitiveCollection<string>("TopGenres")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.PrimitiveCollection<string>("TopTracks")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "FetchedAt")
+                        .IsDescending(false, true);
+
+                    b.ToTable("SpotifySnapshots", (string)null);
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.StudentEmbedding", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Vector>("Embedding")
+                        .HasColumnType("vector(384)");
+
+                    b.Property<DateTime?>("LastEmbeddedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("StudentEmbeddings", (string)null);
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.StudentProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("CleanlinessLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("GuestFrequency")
+                        .HasColumnType("integer");
+
+                    b.PrimitiveCollection<string>("InterestSlugs")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("InterestsCompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LifestyleCompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("NoiseTolerance")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("SleepSchedule")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("SmokingHabit")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SpotifyAccessToken")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<DateTime?>("SpotifyConnectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SpotifyRefreshToken")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.PrimitiveCollection<string>("SpotifyScopes")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("SpotifyTokenExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("StudyLocation")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("TipiAgreeableness")
+                        .HasColumnType("numeric");
+
+                    b.PrimitiveCollection<string>("TipiAnswers")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("TipiCompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("TipiConscientiousness")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("TipiEmotionalStability")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("TipiExtraversion")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("TipiOpenness")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("WakeUpTime")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("StudentProfiles", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_StudentProfile_Cleanliness_Range", "\"CleanlinessLevel\" IS NULL OR \"CleanlinessLevel\" BETWEEN 1 AND 5");
+                        });
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.StudentRecord", b =>

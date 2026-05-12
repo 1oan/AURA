@@ -31,6 +31,8 @@ services:
       Jwt__Audience: ${JWT_AUDIENCE}
     ports:
       - "5000:5000"
+    volumes:
+      - aura_dpkeys:/var/aura/dpkeys
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,3 +57,4 @@ services:
 
 volumes:
   postgres_data:
+  aura_dpkeys:
