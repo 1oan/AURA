@@ -31,5 +31,7 @@ public class AllocationPeriodConfiguration : IEntityTypeConfiguration<Allocation
 
         builder.Property(ap => ap.Round1Date).IsRequired();
         builder.Property(ap => ap.ResponseWindowDays).IsRequired();
+
+        builder.Ignore(ap => ap.DomainEvents);
     }
 }

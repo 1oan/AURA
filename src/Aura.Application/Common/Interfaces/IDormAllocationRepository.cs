@@ -60,6 +60,9 @@ public interface IDormAllocationRepository
     /// </summary>
     Task<List<DormAllocation>> GetPendingFromPriorRoundsAsync(Guid allocationPeriodId, int currentRound, CancellationToken cancellationToken = default);
 
+    Task<DormAllocation?> FindActiveByUserAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<DormAllocation>> ListAcceptedWithoutRoomAsync(Guid allocationPeriodId, CancellationToken cancellationToken = default);
+
     Task AddAsync(DormAllocation allocation, CancellationToken cancellationToken = default);
 
     Task SaveChangesAsync(CancellationToken cancellationToken = default);

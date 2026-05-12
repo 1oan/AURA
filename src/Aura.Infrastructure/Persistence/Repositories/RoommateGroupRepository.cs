@@ -20,6 +20,12 @@ public class RoommateGroupRepository(AuraDbContext context) : IRoommateGroupRepo
             .Where(g => g.Status == GroupStatus.Forming || g.Status == GroupStatus.Locked)
             .FirstOrDefaultAsync(g => g.Members.Any(m => m.UserId == userId), cancellationToken);
 
+    public async Task<RoommateGroup?> GetActiveGroupForUserAsync(Guid userId, CancellationToken cancellationToken = default)
+        => await context.RoommateGroups
+            .Include(g => g.Members)
+            .Where(g => g.Status == GroupStatus.Forming || g.Status == GroupStatus.Locked)
+            .FirstOrDefaultAsync(g => g.Members.Any(m => m.UserId == userId), cancellationToken);
+
     public async Task<List<RoommateGroup>> GetExpiredOverdueAsync(DateTime utcNow, CancellationToken cancellationToken = default)
         => await context.RoommateGroups
             .Include(g => g.Members)

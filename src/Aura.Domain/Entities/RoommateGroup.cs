@@ -18,6 +18,7 @@ public class RoommateGroup
     public DateTime? LockedAt { get; private set; }
     public DateTime? DisbandedAt { get; private set; }
     public DateTime? ExpiredAt { get; private set; }
+    public Guid? AnchorRoomId { get; private set; }
 
     private readonly List<GroupMember> _members = [];
     public IReadOnlyCollection<GroupMember> Members => _members.AsReadOnly();
@@ -75,6 +76,17 @@ public class RoommateGroup
         var removed = _members.RemoveAll(m => m.UserId == userId);
         if (removed == 0)
             throw new DomainException("User is not a member of this group.");
+    }
+
+    public void SetAnchor(Guid roomId)
+    {
+        if (Status != GroupStatus.Forming)
+            throw new DomainException($"Cannot set anchor: group is {Status}, not Forming.");
+        if (AnchorRoomId is not null)
+            throw new DomainException("Anchor room is already set and cannot be changed.");
+        if (roomId == Guid.Empty)
+            throw new DomainException("Anchor room ID is required.");
+        AnchorRoomId = roomId;
     }
 
     public void ChangeRoomSizePreference(RoomSizePreference newPref)

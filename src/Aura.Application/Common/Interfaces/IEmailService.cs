@@ -32,4 +32,19 @@ public interface IEmailService
     Task SendGroupExpiredAsync(
         string toEmail, string firstName, string dormitoryName,
         CancellationToken cancellationToken);
+
+    Task SendPlacementConfirmationAsync(
+        string toEmail, string firstName,
+        string dormitoryName, string roomNumber,
+        string[] roommateFirstNames,
+        CancellationToken cancellationToken);
+
+    Task SendForfeitedNotificationAsync(
+        string toEmail, string firstName, string dormitoryName,
+        CancellationToken cancellationToken);
+
+    Task SendPreCloseWarningAsync(
+        string toEmail, string firstName, string dormitoryName,
+        DateTime periodClosesAtUtc,
+        CancellationToken cancellationToken);
 }

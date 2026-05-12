@@ -95,6 +95,9 @@ namespace Aura.Infrastructure.Migrations
                     b.Property<Guid>("DormitoryId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime?>("LastPreCloseWarningSentAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime?>("ReminderSentAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -701,6 +704,43 @@ namespace Aura.Infrastructure.Migrations
                     b.ToTable("Rooms");
                 });
 
+            modelBuilder.Entity("Aura.Domain.Entities.RoomAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AllocationPeriodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RoommateGroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AllocationPeriodId");
+
+                    b.HasIndex("RoommateGroupId");
+
+                    b.HasIndex("RoomId", "AllocationPeriodId")
+                        .HasDatabaseName("IX_RoomAssignments_RoomId_AllocationPeriodId");
+
+                    b.HasIndex("UserId", "AllocationPeriodId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_RoomAssignments_UserId_AllocationPeriodId");
+
+                    b.ToTable("RoomAssignments");
+                });
+
             modelBuilder.Entity("Aura.Domain.Entities.RoommateGroup", b =>
                 {
                     b.Property<Guid>("Id")
@@ -708,6 +748,9 @@ namespace Aura.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("AllocationPeriodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AnchorRoomId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -738,6 +781,8 @@ namespace Aura.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AnchorRoomId");
 
                     b.HasIndex("AllocationPeriodId", "Status");
 
@@ -1194,8 +1239,47 @@ namespace Aura.Infrastructure.Migrations
                     b.Navigation("Dormitory");
                 });
 
+            modelBuilder.Entity("Aura.Domain.Entities.RoomAssignment", b =>
+                {
+                    b.HasOne("Aura.Domain.Entities.AllocationPeriod", "AllocationPeriod")
+                        .WithMany()
+                        .HasForeignKey("AllocationPeriodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aura.Domain.Entities.Room", "Room")
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aura.Domain.Entities.RoommateGroup", "RoommateGroup")
+                        .WithMany()
+                        .HasForeignKey("RoommateGroupId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Aura.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AllocationPeriod");
+
+                    b.Navigation("Room");
+
+                    b.Navigation("RoommateGroup");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Aura.Domain.Entities.RoommateGroup", b =>
                 {
+                    b.HasOne("Aura.Domain.Entities.Room", null)
+                        .WithMany()
+                        .HasForeignKey("AnchorRoomId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.OwnsMany("Aura.Domain.Entities.GroupMember", "Members", b1 =>
                         {
                             b1.Property<Guid>("GroupId")

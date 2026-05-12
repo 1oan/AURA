@@ -12,8 +12,13 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import AppSidebar from './AppSidebar.vue'
+import PreCloseCountdownBanner from '@/components/features/lobby/PreCloseCountdownBanner.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
+const authStore = useAuthStore()
+
+const isStudent = computed(() => authStore.user?.role === 'Student')
 
 const breadcrumbs = computed(() => {
   const titles: Record<string, string> = {
@@ -57,7 +62,8 @@ const breadcrumbs = computed(() => {
           </Breadcrumb>
         </div>
       </header>
-      <main class="flex-1 overflow-auto p-3">
+      <PreCloseCountdownBanner v-if="isStudent" />
+      <main class="flex-1 overflow-auto p-4 sm:p-5">
         <slot />
       </main>
     </SidebarInset>

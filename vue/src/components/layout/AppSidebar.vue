@@ -112,11 +112,15 @@ function isActive(url: string) {
           <SidebarMenuButton size="lg" as-child class="hover:bg-transparent active:bg-transparent">
             <router-link to="/" class="flex items-center gap-2.5">
               <div
-                class="flex aspect-square size-7 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground"
+                class="grain relative flex aspect-square size-7 items-center justify-center overflow-hidden rounded-md bg-primary ring-1 ring-primary/20"
               >
-                A
+                <span class="relative z-10 text-[11px] font-bold tracking-wider text-primary-foreground">A</span>
+                <div
+                  class="pointer-events-none absolute inset-0"
+                  style="background: radial-gradient(circle at 30% 30%, oklch(0.7 0.15 259 / 0.4) 0%, transparent 70%)"
+                />
               </div>
-              <span class="text-sm font-semibold tracking-tight">AURA</span>
+              <span class="text-[13px] font-semibold tracking-wide">AURA</span>
             </router-link>
           </SidebarMenuButton>
         </SidebarMenuItem>

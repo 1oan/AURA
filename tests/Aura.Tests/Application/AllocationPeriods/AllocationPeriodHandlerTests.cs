@@ -10,6 +10,7 @@ using Aura.Application.Common.Interfaces;
 using Aura.Domain.Entities;
 using Aura.Domain.Exceptions;
 using FluentAssertions;
+using MediatR;
 using NSubstitute;
 
 namespace Aura.Tests.Application.AllocationPeriods;
@@ -204,6 +205,7 @@ public class StartAllocatingCommandHandlerTests
 public class CloseAllocationPeriodCommandHandlerTests
 {
     private readonly IAllocationPeriodRepository _repo = Substitute.For<IAllocationPeriodRepository>();
+    private readonly IPublisher _publisher = Substitute.For<IPublisher>();
 
     [Fact]
     public async Task Handle_ClosesAllocatingPeriod()
@@ -211,7 +213,7 @@ public class CloseAllocationPeriodCommandHandlerTests
         var period = PeriodFactory.Allocating();
         _repo.FindByIdAsync(period.Id, Arg.Any<CancellationToken>()).Returns(period);
 
-        var handler = new CloseAllocationPeriodCommandHandler(_repo);
+        var handler = new CloseAllocationPeriodCommandHandler(_repo, _publisher);
         await handler.Handle(new CloseAllocationPeriodCommand(period.Id), CancellationToken.None);
 
         period.Status.ToString().Should().Be("Closed");
@@ -222,7 +224,7 @@ public class CloseAllocationPeriodCommandHandlerTests
     {
         _repo.FindByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns((AllocationPeriod?)null);
 
-        var handler = new CloseAllocationPeriodCommandHandler(_repo);
+        var handler = new CloseAllocationPeriodCommandHandler(_repo, _publisher);
         var act = async () => await handler.Handle(
             new CloseAllocationPeriodCommand(Guid.NewGuid()), CancellationToken.None);
 

@@ -7,4 +7,5 @@ public enum AllocationStatus
     Declined,
     Expired,
     Replaced,
+    Forfeited,
 }

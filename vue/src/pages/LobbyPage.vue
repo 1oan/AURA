@@ -11,11 +11,16 @@ import DisbandGroupDialog from '@/components/features/lobby/DisbandGroupDialog.v
 import { useAuthStore } from '@/stores/auth'
 import { getMyGroup, getMyInvitations } from '@/api/groups'
 import type { GroupDto, InvitationDto } from '@/api/groups'
+import { getMyRoom } from '@/api/rooms'
+import type { RoomAssignmentDto } from '@/api/rooms'
 import { getMyProfile } from '@/api/profile'
+import RoomCard from '@/components/features/lobby/RoomCard.vue'
+import PlaceMeNowButton from '@/components/features/lobby/PlaceMeNowButton.vue'
 
 const auth = useAuthStore()
 const myGroup = ref<GroupDto | null>(null)
 const myInvitations = ref<InvitationDto[]>([])
+const myRoom = ref<RoomAssignmentDto | null>(null)
 const hasLifestyleData = ref(false)
 const loading = ref(true)
 const disbandDialogOpen = ref(false)
@@ -23,16 +28,18 @@ const disbandDialogOpen = ref(false)
 const currentUserId = computed(() => auth.user?.id ?? '')
 const isLeader = computed(() => myGroup.value?.leaderUserId === currentUserId.value)
 
-const mode = computed<'no-group' | 'forming-leader' | 'forming-member' | 'locked'>(() => {
+const mode = computed<'no-group' | 'forming-leader' | 'forming-member' | 'locked' | 'assigned'>(() => {
+  if (myRoom.value) return 'assigned'
   if (!myGroup.value) return 'no-group'
   if (myGroup.value.status === 'Locked') return 'locked'
   return isLeader.value ? 'forming-leader' : 'forming-member'
 })
 
 async function refresh() {
-  const [g, invs] = await Promise.all([getMyGroup(), getMyInvitations()])
+  const [g, invs, room] = await Promise.all([getMyGroup(), getMyInvitations(), getMyRoom().catch(() => null)])
   myGroup.value = g
   myInvitations.value = invs
+  myRoom.value = room
 }
 
 onMounted(async () => {
@@ -83,6 +90,7 @@ onMounted(async () => {
               @declined="refresh"
             />
           </div>
+          <PlaceMeNowButton group-status="no-group" @placed="refresh" />
         </div>
 
         <!-- Leader: asymmetric 2-column grid -->
@@ -117,25 +125,33 @@ onMounted(async () => {
             :group-id="myGroup.id"
             @disbanded="async () => { disbandDialogOpen = false; await refresh() }"
           />
+          <PlaceMeNowButton group-status="forming-leader" @placed="refresh" />
         </div>
 
         <!-- Member: full-width group card -->
-        <div v-else-if="mode === 'forming-member' && myGroup" key="forming-member">
+        <div v-else-if="mode === 'forming-member' && myGroup" key="forming-member" class="space-y-4">
           <GroupCard
             :group="myGroup"
             :current-user-id="currentUserId"
             mode="member"
             @leave="refresh"
           />
+          <PlaceMeNowButton group-status="forming-member" @placed="refresh" />
         </div>
 
         <!-- Locked: full-width locked state -->
-        <div v-else-if="mode === 'locked' && myGroup" key="locked">
+        <div v-else-if="mode === 'locked' && myGroup" key="locked" class="space-y-4">
           <GroupCard
             :group="myGroup"
             :current-user-id="currentUserId"
             mode="locked"
           />
+          <PlaceMeNowButton group-status="locked" @placed="refresh" />
+        </div>
+
+        <!-- Assigned: show room card -->
+        <div v-else-if="mode === 'assigned' && myRoom" key="assigned" class="space-y-4">
+          <RoomCard :assignment="myRoom" />
         </div>
       </Transition>
     </div>

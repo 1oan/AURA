@@ -1,5 +1,6 @@
 using Aura.Application.Common.Interfaces;
 using Aura.Domain.Entities;
+using Aura.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aura.Infrastructure.Persistence.Repositories;
@@ -12,6 +13,13 @@ public class RoomRepository(AuraDbContext context) : IRoomRepository
     public async Task<List<Room>> GetByDormitoryIdAsync(Guid dormitoryId, CancellationToken cancellationToken = default)
         => await context.Rooms
             .Where(r => r.DormitoryId == dormitoryId)
+            .OrderBy(r => r.Floor)
+            .ThenBy(r => r.Number)
+            .ToListAsync(cancellationToken);
+
+    public async Task<List<Room>> ListByDormitoryAndGenderAsync(Guid dormitoryId, Gender gender, CancellationToken cancellationToken = default)
+        => await context.Rooms
+            .Where(r => r.DormitoryId == dormitoryId && r.Gender == gender)
             .OrderBy(r => r.Floor)
             .ThenBy(r => r.Number)
             .ToListAsync(cancellationToken);

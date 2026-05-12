@@ -14,6 +14,7 @@ public class DormAllocation
     public DateTime AllocatedAt { get; private set; }
     public DateTime? RespondedAt { get; private set; }
     public DateTime? ReminderSentAt { get; private set; }
+    public DateTime? LastPreCloseWarningSentAt { get; private set; }
 
     public User? User { get; private set; }
     public Dormitory? Dormitory { get; private set; }
@@ -77,6 +78,14 @@ public class DormAllocation
         RespondedAt = DateTime.UtcNow;
     }
 
+    public void Forfeit()
+    {
+        if (Status != AllocationStatus.Accepted)
+            throw new DomainException($"Cannot forfeit allocation in status {Status}.");
+        Status = AllocationStatus.Forfeited;
+        RespondedAt = DateTime.UtcNow;
+    }
+
     public void MarkReminderSent()
     {
         if (Status != AllocationStatus.Pending)
@@ -84,5 +93,12 @@ public class DormAllocation
         if (ReminderSentAt is not null)
             throw new DomainException("Reminder has already been sent for this allocation.");
         ReminderSentAt = DateTime.UtcNow;
+    }
+
+    public void MarkPreCloseWarningSent()
+    {
+        if (Status != AllocationStatus.Accepted)
+            throw new DomainException("Pre-close warning is only relevant for Accepted allocations.");
+        LastPreCloseWarningSentAt = DateTime.UtcNow;
     }
 }

@@ -22,6 +22,8 @@ public class RoommateGroupConfiguration : IEntityTypeConfiguration<RoommateGroup
             m.WithOwner().HasForeignKey(gm => gm.GroupId);
         });
 
+        builder.HasOne<Room>().WithMany().HasForeignKey(g => g.AnchorRoomId).OnDelete(DeleteBehavior.SetNull).IsRequired(false);
+
         builder.Ignore(g => g.DomainEvents);
     }
 }

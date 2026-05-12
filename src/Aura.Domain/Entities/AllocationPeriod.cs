@@ -1,5 +1,7 @@
 using Aura.Domain.Enums;
+using Aura.Domain.Events;
 using Aura.Domain.Exceptions;
+using MediatR;
 
 namespace Aura.Domain.Entities;
 
@@ -12,6 +14,10 @@ public class AllocationPeriod
     public AllocationPeriodStatus Status { get; private set; }
     public DateTime Round1Date { get; private set; }
     public int ResponseWindowDays { get; private set; }
+
+    private readonly List<INotification> _domainEvents = [];
+    public IReadOnlyCollection<INotification> DomainEvents => _domainEvents.AsReadOnly();
+    public void ClearDomainEvents() => _domainEvents.Clear();
 
     private AllocationPeriod() { }
 
@@ -75,5 +81,6 @@ public class AllocationPeriod
         if (Status != AllocationPeriodStatus.Allocating)
             throw new DomainException("Can only close an Allocating allocation period.");
         Status = AllocationPeriodStatus.Closed;
+        _domainEvents.Add(new AllocationPeriodClosedEvent(Id));
     }
 }

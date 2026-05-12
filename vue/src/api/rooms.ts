@@ -59,3 +59,39 @@ export function updateRoom(id: string, data: UpdateRoomRequest): Promise<void> {
 export function deleteRoom(id: string): Promise<void> {
   return apiClient<void>(`/rooms/${id}`, { method: 'DELETE' })
 }
+
+export interface RoommateDto {
+  userId: string
+  firstName: string
+  lastName: string
+}
+
+export interface RoomAssignmentDto {
+  roomAssignmentId: string
+  roomId: string
+  roomNumber: string
+  dormitoryName: string
+  floor: number
+  capacity: number
+  assignedAt: string
+  roommates: RoommateDto[]
+}
+
+export interface PeriodCountdownDto {
+  allocationPeriodId: string
+  periodName: string
+  closingAtUtc: string
+  hoursRemaining: number
+}
+
+export function placeMeNow(): Promise<void> {
+  return apiClient<void>('/rooms/place-me-now', { method: 'POST' })
+}
+
+export function getMyRoom(): Promise<RoomAssignmentDto | null> {
+  return apiClient<RoomAssignmentDto | null>('/rooms/me')
+}
+
+export function getPeriodCountdown(): Promise<PeriodCountdownDto | null> {
+  return apiClient<PeriodCountdownDto | null>('/rooms/period-countdown')
+}

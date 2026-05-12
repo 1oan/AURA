@@ -168,6 +168,20 @@ public class DormAllocationRepository(AuraDbContext context) : IDormAllocationRe
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<DormAllocation?> FindActiveByUserAsync(Guid userId, CancellationToken cancellationToken = default)
+        => await context.DormAllocations
+            .Include(a => a.Dormitory)
+            .Where(a => a.UserId == userId && (a.Status == AllocationStatus.Accepted || a.Status == AllocationStatus.Pending))
+            .OrderByDescending(a => a.AllocatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<DormAllocation>> ListAcceptedWithoutRoomAsync(Guid allocationPeriodId, CancellationToken cancellationToken = default)
+        => await context.DormAllocations
+            .Where(a => a.AllocationPeriodId == allocationPeriodId
+                     && a.Status == AllocationStatus.Accepted
+                     && !context.RoomAssignments.Any(r => r.UserId == a.UserId && r.AllocationPeriodId == allocationPeriodId))
+            .ToListAsync(cancellationToken);
+
     public async Task AddAsync(DormAllocation allocation, CancellationToken cancellationToken = default)
     {
         await context.DormAllocations.AddAsync(allocation, cancellationToken);

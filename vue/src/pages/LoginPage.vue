@@ -39,9 +39,9 @@ async function handleSubmit() {
   <AuthLayout>
     <div class="space-y-6">
       <div class="space-y-1.5">
-        <h1 class="text-xl font-semibold tracking-tight">Welcome back</h1>
-        <p class="text-[13px] text-muted-foreground">
-          Sign in to your account to continue.
+        <h1 class="text-2xl font-semibold tracking-tight">Welcome back</h1>
+        <p class="text-sm text-muted-foreground">
+          Sign in with your institutional email.
         </p>
       </div>
 

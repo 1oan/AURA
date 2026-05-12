@@ -13,6 +13,7 @@ import {
   GraduationCap,
   Home,
   Loader2,
+  Users2,
 } from 'lucide-vue-next'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -32,9 +33,13 @@ import { getMyAllocation, acceptAllocation, declineAllocation } from '@/api/dorm
 import type { DormAllocationDto } from '@/api/dormAllocations'
 import { getMyGroup } from '@/api/groups'
 import type { GroupDto } from '@/api/groups'
+import { getMyRoom } from '@/api/rooms'
+import type { RoomAssignmentDto } from '@/api/rooms'
 import { ApiError } from '@/api/client'
 import DeclineAllocationDialog from '@/components/features/DeclineAllocationDialog.vue'
 import ProfileCompletenessBanner from '@/components/features/profile/ProfileCompletenessBanner.vue'
+import RoomCard from '@/components/features/lobby/RoomCard.vue'
+import PlaceMeNowButton from '@/components/features/lobby/PlaceMeNowButton.vue'
 
 const authStore = useAuthStore()
 const isAdmin = computed(() => ['SuperAdmin', 'FacultyAdmin'].includes(authStore.user?.role ?? ''))
@@ -57,6 +62,7 @@ const participateError = ref('')
 const activePeriodForStudent = ref<AllocationPeriodDto | null>(null)
 const myAllocation = ref<DormAllocationDto | null | undefined>(undefined)
 const myGroup = ref<GroupDto | null>(null)
+const myRoom = ref<RoomAssignmentDto | null | undefined>(undefined)
 const declineDialogOpen = ref(false)
 const declineLoading = ref(false)
 const acceptLoading = ref(false)
@@ -89,6 +95,7 @@ async function loadDashboard() {
         if (allocResult.status === 'fulfilled') myAllocation.value = allocResult.value
         if (myAllocation.value?.status === 'Accepted') {
           myGroup.value = await getMyGroup().catch(() => null)
+          myRoom.value = await getMyRoom().catch(() => null)
         }
       }
     } catch {
@@ -567,24 +574,114 @@ const myAllocationCardClass = computed(() => {
                 >
                   Contact your faculty admin if this is wrong.
                 </p>
-                <div v-if="myAllocation.status === 'Accepted'" class="mt-3 rounded-md border bg-muted/20 p-3">
-                  <p v-if="!myGroup" class="text-xs text-muted-foreground">
-                    Visit the lobby when you're ready to form a roommate group.
-                  </p>
-                  <p v-else-if="myGroup.status === 'Forming'" class="text-xs text-muted-foreground">
-                    Your group has {{ myGroup.members.length }} of {{ myGroup.roomSizePreference }} members.
-                  </p>
-                  <p v-else-if="myGroup.status === 'Locked'" class="text-xs text-muted-foreground">
-                    You're in a locked group with {{ myGroup.members.filter(m => m.userId !== authStore.user?.id).map(m => m.firstName).join(', ') }}. Room assignment coming next.
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    class="mt-2 h-7 text-xs"
-                    as-child
+                <!-- Next-step panel (only shown when room not yet assigned) -->
+                <div v-if="myAllocation.status === 'Accepted' && !myRoom" class="mt-4 space-y-3">
+                  <!-- No group: two clear paths -->
+                  <section
+                    v-if="!myGroup"
+                    class="relative overflow-hidden rounded-xl border border-primary/15 bg-gradient-to-br from-primary/[0.05] via-primary/[0.02] to-transparent p-4"
                   >
-                    <router-link to="/lobby">Open lobby</router-link>
-                  </Button>
+                    <div
+                      class="pointer-events-none absolute -right-12 -top-12 size-48 rounded-full opacity-50"
+                      style="background: radial-gradient(circle, oklch(0.5 0.18 259 / 0.18) 0%, transparent 70%)"
+                      aria-hidden="true"
+                    />
+
+                    <div class="relative">
+                      <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary/70">
+                        Next step
+                      </p>
+                      <h3 class="mt-0.5 text-sm font-semibold tracking-tight">
+                        Choose how you want to be placed
+                      </h3>
+                    </div>
+
+                    <div class="relative mt-4 grid gap-3 sm:grid-cols-2">
+                      <!-- Form a group -->
+                      <article class="flex flex-col gap-3 rounded-lg border border-border/60 bg-background/80 p-4">
+                        <header class="flex items-start gap-3">
+                          <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/15">
+                            <Users2 class="size-4 text-primary" />
+                          </span>
+                          <div class="min-w-0">
+                            <h4 class="text-sm font-semibold tracking-tight">Form a group</h4>
+                            <p class="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                              Invite up to two classmates and pick a room together.
+                            </p>
+                          </div>
+                        </header>
+                        <div class="mt-auto flex justify-end">
+                          <Button size="sm" as-child class="group">
+                            <router-link to="/lobby">
+                              Open lobby
+                              <ArrowRight class="ml-1 size-3.5 transition-transform group-hover:translate-x-0.5" />
+                            </router-link>
+                          </Button>
+                        </div>
+                      </article>
+
+                      <!-- Place me solo -->
+                      <article class="flex flex-col gap-3 rounded-lg border border-border/60 bg-background/80 p-4">
+                        <header class="flex items-start gap-3">
+                          <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 ring-1 ring-amber-500/20">
+                            <BedDouble class="size-4 text-amber-600 dark:text-amber-400" />
+                          </span>
+                          <div class="min-w-0">
+                            <h4 class="text-sm font-semibold tracking-tight">Go solo</h4>
+                            <p class="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                              Skip the group and we'll assign you the best available room.
+                            </p>
+                          </div>
+                        </header>
+                        <div class="mt-auto flex justify-end">
+                          <PlaceMeNowButton group-status="no-group" display="inline" @placed="loadDashboard" />
+                        </div>
+                      </article>
+                    </div>
+                  </section>
+
+                  <!-- Forming group: progress + open lobby -->
+                  <section
+                    v-else-if="myGroup.status === 'Forming'"
+                    class="rounded-xl border border-amber-500/25 bg-amber-500/[0.04] p-4"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div>
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700/80 dark:text-amber-400/80">
+                          Group forming
+                        </p>
+                        <p class="mt-1 text-sm">
+                          <span class="font-mono tabular-nums font-semibold">{{ myGroup.members.length }}</span>
+                          of
+                          <span class="font-mono tabular-nums">{{ myGroup.roomSizePreference }}</span>
+                          members joined
+                        </p>
+                      </div>
+                      <Button variant="outline" size="sm" class="h-7 text-xs shrink-0" as-child>
+                        <router-link to="/lobby">Open lobby</router-link>
+                      </Button>
+                    </div>
+                  </section>
+
+                  <!-- Locked group: waiting for placement -->
+                  <section
+                    v-else-if="myGroup.status === 'Locked'"
+                    class="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.05] p-4"
+                  >
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700/80 dark:text-emerald-400/80">
+                      Group locked
+                    </p>
+                    <p class="mt-1 text-sm">
+                      You're rooming with
+                      <span class="font-medium">{{ myGroup.members.filter(m => m.userId !== authStore.user?.id).map(m => m.firstName).join(', ') }}</span>.
+                      Your room will appear here shortly.
+                    </p>
+                  </section>
+                </div>
+
+                <!-- Room assigned: milestone card -->
+                <div v-if="myRoom" class="mt-4">
+                  <RoomCard :assignment="myRoom" />
                 </div>
               </template>
 

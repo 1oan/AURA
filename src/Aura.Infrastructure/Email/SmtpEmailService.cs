@@ -146,6 +146,52 @@ public class SmtpEmailService(
         return SendEmailAsync(toEmail, subject, body, cancellationToken);
     }
 
+    public Task SendPlacementConfirmationAsync(
+        string toEmail, string firstName,
+        string dormitoryName, string roomNumber,
+        string[] roommateFirstNames,
+        CancellationToken cancellationToken)
+    {
+        var subject = $"Your room assignment — Room {roomNumber}";
+        var roommatesHtml = roommateFirstNames.Length > 0
+            ? $"<p>Your roommates are: <strong>{WebUtility.HtmlEncode(string.Join(", ", roommateFirstNames))}</strong>.</p>"
+            : "";
+        var body = BuildHtml(firstName,
+            $@"<p>You have been assigned to <strong>Room {WebUtility.HtmlEncode(roomNumber)}</strong>
+                  in <strong>{WebUtility.HtmlEncode(dormitoryName)}</strong>.</p>
+               {roommatesHtml}
+               <p>Open the dashboard to view your assignment:
+                  <a href=""{WebUtility.HtmlEncode(_frontend.BaseUrl)}"">View my assignment</a></p>");
+        return SendEmailAsync(toEmail, subject, body, cancellationToken);
+    }
+
+    public Task SendForfeitedNotificationAsync(
+        string toEmail, string firstName, string dormitoryName,
+        CancellationToken cancellationToken)
+    {
+        var subject = "Your dorm allocation was forfeited";
+        var body = BuildHtml(firstName,
+            $@"<p>Your allocation in <strong>{WebUtility.HtmlEncode(dormitoryName)}</strong>
+                  was forfeited because the allocation period closed before a room was assigned.</p>
+               <p>Contact your faculty admin if you have questions.</p>");
+        return SendEmailAsync(toEmail, subject, body, cancellationToken);
+    }
+
+    public Task SendPreCloseWarningAsync(
+        string toEmail, string firstName, string dormitoryName,
+        DateTime periodClosesAtUtc,
+        CancellationToken cancellationToken)
+    {
+        var subject = "Action needed — allocation period closes soon";
+        var body = BuildHtml(firstName,
+            $@"<p>The allocation period for <strong>{WebUtility.HtmlEncode(dormitoryName)}</strong>
+                  closes on <strong>{periodClosesAtUtc:yyyy-MM-dd HH:mm} UTC</strong>.</p>
+               <p>If no room is assigned before the period closes, your allocation will be forfeited.</p>
+               <p>Open the dashboard to check your status:
+                  <a href=""{WebUtility.HtmlEncode(_frontend.BaseUrl)}"">View my allocation</a></p>");
+        return SendEmailAsync(toEmail, subject, body, cancellationToken);
+    }
+
     private static string BuildHtml(string firstName, string innerHtml) => $@"
 <html><body style=""font-family: Arial, sans-serif; color: #1a1a1a;"">
   <h2 style=""color: #1a1a1a;"">AURA</h2>

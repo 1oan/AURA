@@ -27,6 +27,7 @@ public sealed class AuraDbContext : DbContext, IApplicationDbContext
     public DbSet<SpotifySnapshot> SpotifySnapshots => Set<SpotifySnapshot>();
     public DbSet<RoommateGroup> RoommateGroups => Set<RoommateGroup>();
     public DbSet<GroupInvitation> GroupInvitations => Set<GroupInvitation>();
+    public DbSet<RoomAssignment> RoomAssignments => Set<RoomAssignment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
